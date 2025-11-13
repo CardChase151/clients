@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Onboarding screens
 import Welcome from './onboarding/welcome';
@@ -8,67 +9,83 @@ import Login from './onboarding/login';
 import SignUp from './onboarding/signup';
 import ForgotPassword from './onboarding/forgotpassword';
 
+// Debug screens
+import PublicAppDataDebug from './debug/PublicAppDataDebug';
+
 // Main screens
 import Home from './main/home';
 import Search from './main/search';
+import Saved from './main/saved';
+import Calendar from './main/calendar';
+import Profile from './main/profile';
 
-function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+function AppContent() {
+  const { user, loading } = useAuth();
 
-  // Check if user is authenticated on app load
-  useEffect(() => {
-    const authStatus = localStorage.getItem('isAuthenticated');
-    if (authStatus === 'true') {
-      setIsAuthenticated(true);
-    }
-  }, []);
-
-  // Function to handle login
-  const handleLogin = () => {
-    localStorage.setItem('isAuthenticated', 'true');
-    setIsAuthenticated(true);
-  };
-
-  // If user is not authenticated, show onboarding flow
-  if (!isAuthenticated) {
+  if (loading) {
     return (
-      <Router>
-        <div style={{ 
-          backgroundColor: '#0F1623', 
-          minHeight: '100vh',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-        }}>
-          <Routes>
-            <Route path="/" element={<Welcome />} />
-            <Route path="/login" element={<Login onLogin={handleLogin} />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </div>
-      </Router>
+      <div style={{
+        backgroundColor: '#0F1623',
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        color: '#E2F4FF'
+      }}>
+        <div>Loading...</div>
+      </div>
     );
   }
 
-  // If user is authenticated, show main app
+  // Check if onboarding has been completed
+  const hasCompletedOnboarding = localStorage.getItem('onboardingCompleted') === 'true';
+
   return (
-    <Router>
-      <div style={{ 
-        backgroundColor: '#0F1623', 
-        minHeight: '100vh',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      }}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/saved" element={<div style={{color: '#E2F4FF', padding: '20px'}}>Saved Screen Coming Soon</div>} />
-          <Route path="/calendar" element={<div style={{color: '#E2F4FF', padding: '20px'}}>Calendar Screen Coming Soon</div>} />
-          <Route path="/profile" element={<div style={{color: '#E2F4FF', padding: '20px'}}>Profile Screen Coming Soon</div>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
-    </Router>
+    <div style={{
+      backgroundColor: '#0F1623',
+      minHeight: '100vh',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
+      <Routes>
+        {/* Public routes (no auth required) */}
+        <Route path="/debug" element={<PublicAppDataDebug />} />
+
+        {/* Auth routes (show only when not authenticated) */}
+        {!user && (
+          <>
+            <Route path="/" element={hasCompletedOnboarding ? <Navigate to="/login" replace /> : <Welcome />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+          </>
+        )}
+
+        {/* Protected routes (show only when authenticated) */}
+        {user && (
+          <>
+            <Route path="/" element={<Home />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/saved" element={<Saved />} />
+            <Route path="/calendar" element={<Calendar />} />
+            <Route path="/profile" element={<Profile />} />
+          </>
+        )}
+
+        {/* Fallback redirect */}
+        <Route path="*" element={<Navigate to={user ? "/" : hasCompletedOnboarding ? "/login" : "/"} replace />} />
+      </Routes>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
   );
 }
 

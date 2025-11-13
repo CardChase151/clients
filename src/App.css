@@ -1,5 +1,37 @@
+/* Aggressive approach - force content to full screen with !important */
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent !important;
+}
+
+body {
+  overscroll-behavior: none !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+#root {
+  overscroll-behavior: none !important;
+  width: 100% !important;
+  height: 100vh !important;
+  background: transparent !important;
+}
+
 .App {
   text-align: center;
+  width: 100% !important;
+  min-height: 100vh !important;
+  background: transparent !important;
+}
+
+/* Force content to extend under status bar/Dynamic Island */
+@supports (padding: env(safe-area-inset-top)) {
+  html, body, #root, .App {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
 }
 
 .App-logo {

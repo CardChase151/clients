@@ -102,7 +102,10 @@ function Welcome() {
           Let's get you logged in!
         </h2>
         <button
-          onClick={() => window.location.href = '/login'}
+          onClick={() => {
+            localStorage.setItem('onboardingCompleted', 'true');
+            window.location.href = '/login';
+          }}
           style={{
             backgroundColor: '#00D1FF',
             color: '#0F1623',
