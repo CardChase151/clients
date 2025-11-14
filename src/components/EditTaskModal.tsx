@@ -17,7 +17,7 @@ interface EditTaskModalProps {
 }
 
 function EditTaskModal({ isOpen, onClose, onTaskUpdated, task }: EditTaskModalProps) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<Task['status']>('not_started');
@@ -63,13 +63,19 @@ function EditTaskModal({ isOpen, onClose, onTaskUpdated, task }: EditTaskModalPr
       }
 
       // Then update the task
+      const updateData: any = {
+        title: title.trim(),
+        description: description.trim() || null
+      };
+
+      // Only update status if user is admin
+      if (isAdmin) {
+        updateData.status = status;
+      }
+
       const { error: updateError } = await supabase
         .from('tasks')
-        .update({
-          title: title.trim(),
-          description: description.trim() || null,
-          status: status
-        })
+        .update(updateData)
         .eq('id', task.id);
 
       if (updateError) {
@@ -240,46 +246,48 @@ function EditTaskModal({ isOpen, onClose, onTaskUpdated, task }: EditTaskModalPr
               />
             </div>
 
-            {/* Status */}
-            <div style={{ marginBottom: '24px' }}>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: '#FFFFFF',
-                  marginBottom: '8px'
-                }}
-              >
-                Status
-              </label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as Task['status'])}
-                disabled={saving}
-                style={{
-                  width: '100%',
-                  backgroundColor: '#0A0A0A',
-                  border: '1px solid #333333',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: getStatusColor(status),
-                  cursor: 'pointer',
-                  outline: 'none',
-                  transition: 'border-color 0.2s',
-                  boxSizing: 'border-box'
-                }}
-                onFocus={(e) => e.target.style.borderColor = '#FFFFFF'}
-                onBlur={(e) => e.target.style.borderColor = '#333333'}
-              >
-                <option value="not_started" style={{ color: '#64748B' }}>Not Started</option>
-                <option value="in_progress" style={{ color: '#3B82F6' }}>In Progress</option>
-                <option value="waiting" style={{ color: '#F59E0B' }}>Waiting</option>
-                <option value="done" style={{ color: '#22C55E' }}>Done</option>
-              </select>
-            </div>
+            {/* Status - Only visible for admins */}
+            {isAdmin && (
+              <div style={{ marginBottom: '24px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#FFFFFF',
+                    marginBottom: '8px'
+                  }}
+                >
+                  Status
+                </label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as Task['status'])}
+                  disabled={saving}
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#0A0A0A',
+                    border: '1px solid #333333',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: getStatusColor(status),
+                    cursor: 'pointer',
+                    outline: 'none',
+                    transition: 'border-color 0.2s',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#FFFFFF'}
+                  onBlur={(e) => e.target.style.borderColor = '#333333'}
+                >
+                  <option value="not_started" style={{ color: '#64748B' }}>Not Started</option>
+                  <option value="in_progress" style={{ color: '#3B82F6' }}>In Progress</option>
+                  <option value="waiting" style={{ color: '#F59E0B' }}>Waiting</option>
+                  <option value="done" style={{ color: '#22C55E' }}>Done</option>
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Footer */}

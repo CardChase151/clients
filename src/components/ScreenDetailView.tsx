@@ -395,14 +395,14 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
         )}
         <div style={{
           fontSize: '12px',
-          color: '#666666',
+          color: '#CCCCCC',
           display: 'flex',
           alignItems: 'center',
           gap: '12px'
         }}>
           {screen.creator && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#666666" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#CCCCCC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="6" cy="3.5" r="2"/>
                 <path d="M2.5 10.5v-1a2.5 2.5 0 0 1 2.5-2.5h2a2.5 2.5 0 0 1 2.5 2.5v1"/>
               </svg>
@@ -417,7 +417,7 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
             <>
               {screen.creator && <span>•</span>}
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#666666" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#CCCCCC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="6" cy="6" r="4.5"/>
                   <path d="M6 3v3l2 1"/>
                 </svg>
@@ -1015,14 +1015,14 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
             {/* Creator and Date */}
             <div style={{
               fontSize: '11px',
-              color: '#666666',
+              color: '#CCCCCC',
               display: 'flex',
               flexDirection: 'column',
               gap: '2px'
             }}>
               {task.creator && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#666666" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#CCCCCC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="5" cy="3" r="2"/>
                     <path d="M2 9v-1a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1"/>
                   </svg>
@@ -1035,7 +1035,7 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
               )}
               {task.created_at && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#666666" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#CCCCCC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="5" cy="5" r="4"/>
                     <path d="M5 2.5v2.5l1.5 1"/>
                   </svg>
