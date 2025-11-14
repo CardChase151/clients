@@ -111,11 +111,10 @@ function Search() {
 
           if (screenIds.length > 0) {
             // Fetch tasks for these screens
-            const { data: tasksData } = await supabase
+            const { data: tasksData, error: tasksError } = await supabase
               .from('tasks')
               .select(`
                 *,
-                creator:users!created_by(email),
                 screen:screens(
                   title,
                   project_id,
@@ -123,6 +122,10 @@ function Search() {
                 )
               `)
               .in('screen_id', screenIds);
+
+            if (tasksError) {
+              console.error('Error fetching tasks:', tasksError);
+            }
 
             setTasks(tasksData || []);
           }
