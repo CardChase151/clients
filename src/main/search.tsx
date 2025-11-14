@@ -86,7 +86,7 @@ function Search() {
         const { data: projectsData } = await supabase
           .from('projects')
           .select('*')
-          .eq('user_id', selectedUserId);
+          .eq('created_by', selectedUserId);
 
         setProjects(projectsData || []);
 
