@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../config/supabase';
 import BottomBar from '../menu/bottombar';
@@ -20,6 +21,7 @@ interface OnboardingMilestones {
 }
 
 function Home() {
+  const location = useLocation();
   const { signOut, user, isAdmin: contextIsAdmin } = useAuth();
   const [approved, setApproved] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -95,6 +97,22 @@ function Home() {
 
     fetchApprovalStatus();
   }, [user]);
+
+  // Handle navigation from search results
+  useEffect(() => {
+    const state = location.state as { openProject?: string; openScreen?: string; openTask?: string } | null;
+
+    if (state?.openProject) {
+      setSelectedProjectId(state.openProject);
+
+      if (state.openScreen) {
+        setSelectedScreenId(state.openScreen);
+      }
+
+      // Clear the navigation state to prevent re-opening on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const handleLogout = async () => {
     await signOut();
