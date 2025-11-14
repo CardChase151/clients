@@ -18,6 +18,7 @@ import Search from './main/search';
 import Saved from './main/saved';
 import Calendar from './main/calendar';
 import Profile from './main/profile';
+import Admin from './main/admin';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -69,6 +70,7 @@ function AppContent() {
             <Route path="/saved" element={<Saved />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/admin" element={<Admin />} />
           </>
         )}
 

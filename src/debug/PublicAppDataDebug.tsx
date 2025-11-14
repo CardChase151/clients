@@ -316,17 +316,19 @@ function PublicAppDataDebug() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#0F1623',
+      background: '#000000',
       display: 'flex',
       flexDirection: 'column',
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'auto',
+      WebkitOverflowScrolling: 'touch'
     }}>
       <div style={{
         maxWidth: '800px',
         width: '100%',
         margin: '0 auto',
         padding: '20px',
+        paddingBottom: '60px',
         position: 'relative',
         zIndex: 1,
         flex: 1,
@@ -341,14 +343,14 @@ function PublicAppDataDebug() {
           <h1 style={{
             fontSize: '1.75rem',
             fontWeight: '900',
-            color: '#E2F4FF',
+            color: '#FFFFFF',
             marginBottom: '0.5rem',
             letterSpacing: '0.05em'
           }}>
             APP DATA DEBUG
           </h1>
           <p style={{
-            color: '#7A8CA0',
+            color: '#999999',
             fontSize: '0.875rem',
             margin: 0
           }}>
@@ -364,10 +366,10 @@ function PublicAppDataDebug() {
             alignItems: 'center',
             gap: '8px',
             background: 'transparent',
-            border: '1px solid #1b2a44',
+            border: '1px solid #333333',
             borderRadius: '8px',
             padding: '8px 16px',
-            color: '#00D1FF',
+            color: '#FFFFFF',
             fontSize: '0.875rem',
             fontWeight: '600',
             cursor: 'pointer',
@@ -376,11 +378,11 @@ function PublicAppDataDebug() {
             alignSelf: 'flex-start'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#00D1FF';
-            e.currentTarget.style.backgroundColor = 'rgba(0, 209, 255, 0.1)';
+            e.currentTarget.style.borderColor = '#FFFFFF';
+            e.currentTarget.style.backgroundColor = '#1A1A1A';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = '#1b2a44';
+            e.currentTarget.style.borderColor = '#333333';
             e.currentTarget.style.backgroundColor = 'transparent';
           }}
         >
@@ -425,10 +427,10 @@ function PublicAppDataDebug() {
             style={{
               width: '100%',
               padding: '16px',
-              background: isLoading ? '#6b7280' : '#00D1FF',
+              background: isLoading ? '#6b7280' : '#FFFFFF',
               border: 'none',
               borderRadius: '12px',
-              color: '#0F1623',
+              color: '#000000',
               fontSize: '0.875rem',
               fontWeight: '900',
               letterSpacing: '0.1em',
@@ -444,11 +446,13 @@ function PublicAppDataDebug() {
               if (!isLoading) {
                 e.currentTarget.style.transform = 'translateY(-2px)';
                 e.currentTarget.style.boxShadow = '0 6px 8px -1px rgba(0, 0, 0, 0.5)';
+                e.currentTarget.style.opacity = '0.9';
               }
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
               e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.5)';
+              e.currentTarget.style.opacity = '1';
             }}
           >
             {isLoading ? (
@@ -456,7 +460,7 @@ function PublicAppDataDebug() {
                 <div style={{
                   width: '16px',
                   height: '16px',
-                  border: '2px solid #0F1623',
+                  border: '2px solid #000000',
                   borderTopColor: 'transparent',
                   borderRadius: '50%',
                   animation: 'spin 1s linear infinite'
@@ -472,8 +476,8 @@ function PublicAppDataDebug() {
         {/* Report Display */}
         {reportData && (
           <div style={{
-            backgroundColor: '#101A2B',
-            border: '1px solid #1b2a44',
+            backgroundColor: '#1A1A1A',
+            border: '1px solid #333333',
             borderRadius: '12px',
             padding: '20px',
             marginBottom: '32px'
@@ -485,12 +489,12 @@ function PublicAppDataDebug() {
               alignItems: 'center',
               marginBottom: '16px',
               paddingBottom: '12px',
-              borderBottom: '1px solid #1b2a44'
+              borderBottom: '1px solid #333333'
             }}>
               <h2 style={{
                 fontSize: '1rem',
                 fontWeight: '700',
-                color: '#E2F4FF',
+                color: '#FFFFFF',
                 margin: 0
               }}>
                 Data Report
@@ -502,10 +506,10 @@ function PublicAppDataDebug() {
                   alignItems: 'center',
                   gap: '6px',
                   padding: '8px 12px',
-                  background: copied ? '#10b981' : 'rgba(0, 209, 255, 0.1)',
-                  border: copied ? '1px solid #10b981' : '1px solid #00D1FF',
+                  background: copied ? '#10b981' : 'transparent',
+                  border: copied ? '1px solid #10b981' : '1px solid #FFFFFF',
                   borderRadius: '8px',
-                  color: copied ? '#ffffff' : '#00D1FF',
+                  color: copied ? '#ffffff' : '#FFFFFF',
                   fontSize: '0.75rem',
                   fontWeight: '600',
                   cursor: 'pointer',
@@ -519,8 +523,8 @@ function PublicAppDataDebug() {
             {/* JSON Report */}
             <pre style={{
               fontSize: '0.75rem',
-              color: '#E2F4FF',
-              backgroundColor: '#0a0e16',
+              color: '#FFFFFF',
+              backgroundColor: '#0a0a0a',
               padding: '16px',
               borderRadius: '8px',
               overflow: 'auto',

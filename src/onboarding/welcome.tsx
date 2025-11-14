@@ -6,35 +6,38 @@ function Welcome() {
   if (step === 1) {
     return (
       <div style={{
-        backgroundColor: '#0F1623',
+        backgroundColor: '#000000',
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         padding: '20px',
-        color: '#E2F4FF'
+        color: '#FFFFFF'
       }}>
-        <h2 style={{ 
-          fontSize: '24px', 
-          fontWeight: '800', 
+        <h2 style={{
+          fontSize: '24px',
+          fontWeight: '800',
           marginBottom: '40px',
           textAlign: 'center'
         }}>
           Welcome to your app!
         </h2>
-        <button 
+        <button
           onClick={() => setStep(2)}
           style={{
-            backgroundColor: '#00D1FF',
-            color: '#0F1623',
+            backgroundColor: '#FFFFFF',
+            color: '#000000',
             border: 'none',
-            padding: '14px 32px',
-            borderRadius: '12px',
+            padding: '16px 32px',
+            borderRadius: '8px',
             fontSize: '16px',
-            fontWeight: '900',
-            cursor: 'pointer'
+            fontWeight: '700',
+            cursor: 'pointer',
+            transition: 'opacity 0.2s'
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
         >
           Next
         </button>
@@ -45,35 +48,38 @@ function Welcome() {
   if (step === 2) {
     return (
       <div style={{
-        backgroundColor: '#0F1623',
+        backgroundColor: '#000000',
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         padding: '20px',
-        color: '#E2F4FF'
+        color: '#FFFFFF'
       }}>
-        <h2 style={{ 
-          fontSize: '24px', 
-          fontWeight: '800', 
+        <h2 style={{
+          fontSize: '24px',
+          fontWeight: '800',
           marginBottom: '40px',
           textAlign: 'center'
         }}>
           Here is all the information to start users on their journey!
         </h2>
-        <button 
+        <button
           onClick={() => setStep(3)}
           style={{
-            backgroundColor: '#00D1FF',
-            color: '#0F1623',
+            backgroundColor: '#FFFFFF',
+            color: '#000000',
             border: 'none',
-            padding: '14px 32px',
-            borderRadius: '12px',
+            padding: '16px 32px',
+            borderRadius: '8px',
             fontSize: '16px',
-            fontWeight: '900',
-            cursor: 'pointer'
+            fontWeight: '700',
+            cursor: 'pointer',
+            transition: 'opacity 0.2s'
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
         >
           Next
         </button>
@@ -84,18 +90,18 @@ function Welcome() {
   if (step === 3) {
     return (
       <div style={{
-        backgroundColor: '#0F1623',
+        backgroundColor: '#000000',
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         padding: '20px',
-        color: '#E2F4FF'
+        color: '#FFFFFF'
       }}>
-        <h2 style={{ 
-          fontSize: '24px', 
-          fontWeight: '800', 
+        <h2 style={{
+          fontSize: '24px',
+          fontWeight: '800',
           marginBottom: '40px',
           textAlign: 'center'
         }}>
@@ -107,15 +113,18 @@ function Welcome() {
             window.location.href = '/login';
           }}
           style={{
-            backgroundColor: '#00D1FF',
-            color: '#0F1623',
+            backgroundColor: '#FFFFFF',
+            color: '#000000',
             border: 'none',
-            padding: '14px 32px',
-            borderRadius: '12px',
+            padding: '16px 32px',
+            borderRadius: '8px',
             fontSize: '16px',
-            fontWeight: '900',
-            cursor: 'pointer'
+            fontWeight: '700',
+            cursor: 'pointer',
+            transition: 'opacity 0.2s'
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
         >
           Login
         </button>

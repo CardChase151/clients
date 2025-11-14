@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../config/supabase';
 
 interface BottomBarProps {
   activeTab: string;
@@ -42,16 +44,51 @@ const ProfileIcon = () => (
   </svg>
 );
 
+const AdminIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" strokeWidth="2"/>
+    <path d="M7 11V7C7 4.23858 9.23858 2 12 2C14.7614 2 17 4.23858 17 7V11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 function BottomBar({ activeTab }: BottomBarProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const tabs = [
+  useEffect(() => {
+    const fetchAdminStatus = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('is_admin')
+          .eq('id', user.id)
+          .single();
+
+        if (!error && data) {
+          setIsAdmin(data.is_admin || false);
+        }
+      } catch (err) {
+        console.error('Error fetching admin status:', err);
+      }
+    };
+
+    fetchAdminStatus();
+  }, [user]);
+
+  const baseTabs = [
     { id: 'home', label: 'Home', icon: <HomeIcon /> },
     { id: 'search', label: 'Search', icon: <SearchIcon /> },
     { id: 'saved', label: 'Saved', icon: <HeartIcon /> },
     { id: 'calendar', label: 'Calendar', icon: <CalendarIcon /> },
     { id: 'profile', label: 'Profile', icon: <ProfileIcon /> }
   ];
+
+  const tabs = isAdmin
+    ? [...baseTabs, { id: 'admin', label: 'Admin', icon: <AdminIcon /> }]
+    : baseTabs;
 
   const handleTabChange = (tabId: string) => {
     if (tabId === 'home') {
@@ -61,59 +98,63 @@ function BottomBar({ activeTab }: BottomBarProps) {
     }
   };
 
-  const containerStyle = {
-    position: 'fixed' as const,
-    bottom: 0,
+  const containerStyle: React.CSSProperties = {
+    position: 'fixed',
+    bottom: '20px',
     left: 0,
     right: 0,
-    backgroundColor: '#0B1220',
-    borderTop: '1px solid #1b2a44',
+    height: 'auto',
+    zIndex: 1000,
+    background: 'transparent',
+    border: 'none',
     display: 'flex',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: '12px 0 24px 0',
-    zIndex: 1000
+    gap: '12px',
+    padding: '0 20px'
   };
 
-  const tabStyle = (isActive: boolean) => ({
+  const buttonStyle = (isActive: boolean): React.CSSProperties => ({
+    flex: '0 0 auto',
     display: 'flex',
-    flexDirection: 'column' as const,
     alignItems: 'center',
+    justifyContent: 'center',
+    background: '#1A1A1A',
+    border: 'none',
+    color: isActive ? '#FFFFFF' : '#666666',
+    padding: 0,
     cursor: 'pointer',
-    padding: '8px 12px',
-    borderRadius: '12px',
-    transition: 'all 0.2s ease',
-    backgroundColor: isActive ? 'rgba(0, 209, 255, 0.1)' : 'transparent'
-  });
-
-  const iconStyle = (isActive: boolean) => ({
-    color: isActive ? '#00D1FF' : '#9FBAD1',
-    marginBottom: '4px',
-    transition: 'color 0.2s ease'
-  });
-
-  const labelStyle = (isActive: boolean) => ({
-    fontSize: '12px',
-    color: isActive ? '#00D1FF' : '#9FBAD1',
-    fontWeight: isActive ? '600' : '400',
-    transition: 'color 0.2s ease'
+    transition: 'all 0.3s ease',
+    width: '56px',
+    height: '56px',
+    borderRadius: '50%',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)'
   });
 
   return (
     <div style={containerStyle}>
       {tabs.map(tab => (
-        <div
+        <button
           key={tab.id}
-          style={tabStyle(activeTab === tab.id)}
+          style={buttonStyle(activeTab === tab.id)}
           onClick={() => handleTabChange(tab.id)}
+          onMouseEnter={(e) => {
+            if (activeTab !== tab.id) {
+              e.currentTarget.style.color = '#999999';
+            }
+            e.currentTarget.style.transform = 'translateY(-4px)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            if (activeTab !== tab.id) {
+              e.currentTarget.style.color = '#666666';
+            }
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)';
+          }}
         >
-          <div style={iconStyle(activeTab === tab.id)}>
-            {tab.icon}
-          </div>
-          <span style={labelStyle(activeTab === tab.id)}>
-            {tab.label}
-          </span>
-        </div>
+          {tab.icon}
+        </button>
       ))}
     </div>
   );
