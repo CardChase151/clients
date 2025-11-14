@@ -20,6 +20,13 @@ function Admin() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeSection, setActiveSection] = useState<'upload' | 'users'>('upload');
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserName, setNewUserName] = useState('');
+  const [sendEmail, setSendEmail] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -81,6 +88,77 @@ function Admin() {
   const handleLogout = async () => {
     await signOut();
     window.location.href = '/';
+  };
+
+  const handleCreateUser = async () => {
+    if (!newUserEmail || !newUserPassword) {
+      setError('Email and password are required');
+      return;
+    }
+
+    setCreating(true);
+    setError('');
+
+    try {
+      const response = await fetch('/.netlify/functions/create-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: newUserEmail,
+          password: newUserPassword,
+          fullName: newUserName
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create user');
+      }
+
+      // Success - refresh user list and close modal
+      setShowAddUserModal(false);
+      setNewUserEmail('');
+      setNewUserPassword('');
+      setNewUserName('');
+      setSendEmail(false);
+      fetchUsers();
+
+    } catch (err: any) {
+      setError(err.message || 'Failed to create user');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/.netlify/functions/delete-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete user');
+      }
+
+      // Success - refresh user list
+      fetchUsers();
+
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete user');
+    }
   };
 
   if (!isAdmin) {
@@ -236,14 +314,44 @@ function Admin() {
 
           {activeSection === 'users' && (
             <div style={{ padding: '20px' }}>
-              <h2 style={{
-                fontSize: '20px',
-                fontWeight: '600',
-                marginBottom: '16px',
-                color: '#FFFFFF'
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '16px'
               }}>
-                User Management
-              </h2>
+                <h2 style={{
+                  fontSize: '20px',
+                  fontWeight: '600',
+                  margin: 0,
+                  color: '#FFFFFF'
+                }}>
+                  User Management
+                </h2>
+
+                <button
+                  onClick={() => setShowAddUserModal(true)}
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    color: '#000000',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = '0.9';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = '1';
+                  }}
+                >
+                  + Add User
+                </button>
+              </div>
 
               {loading ? (
                 <div style={{ textAlign: 'center', color: '#666666', padding: '40px' }}>
@@ -295,38 +403,67 @@ function Admin() {
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => toggleApproval(u.id, u.approved)}
-                        style={{
-                          backgroundColor: u.approved ? 'transparent' : '#FFFFFF',
-                          color: u.approved ? '#666666' : '#000000',
-                          border: u.approved ? '1px solid #333333' : 'none',
-                          padding: '8px 16px',
-                          borderRadius: '6px',
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          if (u.approved) {
-                            e.currentTarget.style.backgroundColor = '#1A1A1A';
-                            e.currentTarget.style.color = '#FFFFFF';
-                          } else {
-                            e.currentTarget.style.opacity = '0.9';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (u.approved) {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = '#666666';
-                          } else {
-                            e.currentTarget.style.opacity = '1';
-                          }
-                        }}
-                      >
-                        {u.approved ? 'Revoke' : 'Approve'}
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => toggleApproval(u.id, u.approved)}
+                          style={{
+                            backgroundColor: u.approved ? 'transparent' : '#FFFFFF',
+                            color: u.approved ? '#666666' : '#000000',
+                            border: u.approved ? '1px solid #333333' : 'none',
+                            padding: '8px 16px',
+                            borderRadius: '6px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (u.approved) {
+                              e.currentTarget.style.backgroundColor = '#1A1A1A';
+                              e.currentTarget.style.color = '#FFFFFF';
+                            } else {
+                              e.currentTarget.style.opacity = '0.9';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (u.approved) {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                              e.currentTarget.style.color = '#666666';
+                            } else {
+                              e.currentTarget.style.opacity = '1';
+                            }
+                          }}
+                        >
+                          {u.approved ? 'Revoke' : 'Approve'}
+                        </button>
+
+                        {!u.is_admin && (
+                          <button
+                            onClick={() => handleDeleteUser(u.id)}
+                            style={{
+                              backgroundColor: 'transparent',
+                              color: '#F87171',
+                              border: '1px solid #F87171',
+                              padding: '8px 16px',
+                              borderRadius: '6px',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#F87171';
+                              e.currentTarget.style.color = '#000000';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                              e.currentTarget.style.color = '#F87171';
+                            }}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -337,6 +474,231 @@ function Admin() {
       </div>
 
       <BottomBar activeTab="admin" />
+
+      {/* Add User Modal */}
+      {showAddUserModal && (
+        <div
+          onClick={() => {
+            setShowAddUserModal(false);
+            setError('');
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#1A1A1A',
+              border: '1px solid #333333',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '400px',
+              width: '100%'
+            }}
+          >
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#FFFFFF',
+              margin: '0 0 20px 0'
+            }}>
+              Add New User
+            </h3>
+
+            {error && (
+              <div style={{
+                backgroundColor: '#F87171',
+                color: '#000000',
+                padding: '12px',
+                borderRadius: '8px',
+                marginBottom: '16px',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}>
+                {error}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  color: '#999999',
+                  marginBottom: '6px'
+                }}>
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  placeholder="user@example.com"
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#0A0A0A',
+                    border: '1px solid #333333',
+                    borderRadius: '8px',
+                    padding: '10px 12px',
+                    fontSize: '14px',
+                    color: '#FFFFFF',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  color: '#999999',
+                  marginBottom: '6px'
+                }}>
+                  Password *
+                </label>
+                <input
+                  type="text"
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                  placeholder="Enter password"
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#0A0A0A',
+                    border: '1px solid #333333',
+                    borderRadius: '8px',
+                    padding: '10px 12px',
+                    fontSize: '14px',
+                    color: '#FFFFFF',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  color: '#999999',
+                  marginBottom: '6px'
+                }}>
+                  Full Name (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  placeholder="John Doe"
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#0A0A0A',
+                    border: '1px solid #333333',
+                    borderRadius: '8px',
+                    padding: '10px 12px',
+                    fontSize: '14px',
+                    color: '#FFFFFF',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '12px',
+                backgroundColor: '#0A0A0A',
+                borderRadius: '8px',
+                border: '1px solid #333333'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={sendEmail}
+                  onChange={(e) => setSendEmail(e.target.checked)}
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    cursor: 'pointer'
+                  }}
+                />
+                <label style={{
+                  fontSize: '13px',
+                  color: '#999999',
+                  cursor: 'pointer',
+                  userSelect: 'none'
+                }}
+                onClick={() => setSendEmail(!sendEmail)}
+                >
+                  Send email notification? (Not functional yet)
+                </label>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                marginTop: '8px'
+              }}>
+                <button
+                  onClick={() => {
+                    setShowAddUserModal(false);
+                    setError('');
+                  }}
+                  disabled={creating}
+                  style={{
+                    flex: 1,
+                    backgroundColor: 'transparent',
+                    color: '#666666',
+                    border: '1px solid #333333',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: creating ? 'not-allowed' : 'pointer',
+                    opacity: creating ? 0.5 : 1
+                  }}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleCreateUser}
+                  disabled={creating}
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#FFFFFF',
+                    color: '#000000',
+                    border: 'none',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: creating ? 'not-allowed' : 'pointer',
+                    opacity: creating ? 0.7 : 1
+                  }}
+                >
+                  {creating ? 'Creating...' : 'Create User'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
