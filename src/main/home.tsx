@@ -8,6 +8,7 @@ import ScreensList from '../components/ScreensList';
 import AddScreenModal from '../components/AddScreenModal';
 import ScreenDetailView from '../components/ScreenDetailView';
 import UserDropdown from '../components/UserDropdown';
+import CompleteProfileModal from '../components/CompleteProfileModal';
 
 interface OnboardingMilestones {
   discovery_complete: boolean;
@@ -23,6 +24,7 @@ function Home() {
   const [approved, setApproved] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [profileComplete, setProfileComplete] = useState<boolean | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedScreenId, setSelectedScreenId] = useState<string | null>(null);
@@ -48,7 +50,7 @@ function Home() {
       try {
         const { data, error} = await supabase
           .from('users')
-          .select('approved, is_admin, discovery_complete, discovery_complete_date, proposal_reviewed, proposal_reviewed_date, invoice_fulfilled, invoice_fulfilled_date')
+          .select('approved, is_admin, profile_complete, discovery_complete, discovery_complete_date, proposal_reviewed, proposal_reviewed_date, invoice_fulfilled, invoice_fulfilled_date')
           .eq('id', user.id)
           .single();
 
@@ -56,10 +58,12 @@ function Home() {
           console.error('Home: Error fetching approval status:', error);
           setApproved(false);
           setIsAdmin(false);
+          setProfileComplete(false);
         } else {
           console.log('Home: User data:', data);
           setApproved(data?.approved || false);
           setIsAdmin(data?.is_admin || false);
+          setProfileComplete(data?.profile_complete || false);
 
           // Set milestones
           setMilestones({
@@ -83,6 +87,7 @@ function Home() {
         console.error('Home: Error:', err);
         setApproved(false);
         setIsAdmin(false);
+        setProfileComplete(false);
       } finally {
         setLoading(false);
       }
@@ -139,6 +144,15 @@ function Home() {
         <div>Loading...</div>
       </div>
     );
+  }
+
+  // Profile incomplete - show profile completion modal
+  if (!profileComplete && user) {
+    return <CompleteProfileModal
+      userId={user.id}
+      userEmail={user.email || ''}
+      onComplete={() => setProfileComplete(true)}
+    />;
   }
 
   // Waiting for approval screen
