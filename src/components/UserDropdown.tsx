@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 interface User {
   id: string;
   email: string;
+  first_name: string | null;
+  last_name: string | null;
 }
 
 interface UserDropdownProps {
@@ -26,8 +28,8 @@ function UserDropdown({ selectedUserId, onUserSelect, refreshTrigger }: UserDrop
   const fetchUsers = async () => {
     const { data, error } = await supabase
       .from('users')
-      .select('id, email')
-      .order('email', { ascending: true });
+      .select('id, email, first_name, last_name')
+      .order('first_name', { ascending: true });
 
     if (!error && data) {
       // Filter out current user (admin)
@@ -37,6 +39,13 @@ function UserDropdown({ selectedUserId, onUserSelect, refreshTrigger }: UserDrop
   };
 
   const selectedUser = users.find(u => u.id === selectedUserId);
+
+  const getUserDisplayName = (user: User) => {
+    if (user.first_name && user.last_name) {
+      return `${user.first_name} ${user.last_name}`;
+    }
+    return user.email;
+  };
 
   return (
     <div style={{ position: 'relative', width: '100%', maxWidth: '300px' }}>
@@ -60,7 +69,7 @@ function UserDropdown({ selectedUserId, onUserSelect, refreshTrigger }: UserDrop
         onMouseEnter={(e) => e.currentTarget.style.borderColor = '#FFFFFF'}
         onMouseLeave={(e) => e.currentTarget.style.borderColor = '#333333'}
       >
-        <span>{selectedUser ? selectedUser.email : 'Select a user'}</span>
+        <span>{selectedUser ? getUserDisplayName(selectedUser) : 'Select a user'}</span>
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="2 4 6 8 10 4"/>
         </svg>
@@ -99,7 +108,7 @@ function UserDropdown({ selectedUserId, onUserSelect, refreshTrigger }: UserDrop
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2A2A2A'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = user.id === selectedUserId ? '#2A2A2A' : 'transparent'}
             >
-              {user.email}
+              {getUserDisplayName(user)}
             </div>
           ))}
         </div>

@@ -8,6 +8,8 @@ import UploadProjectSection from '../components/UploadProjectSection';
 interface User {
   id: string;
   email: string;
+  first_name: string | null;
+  last_name: string | null;
   approved: boolean;
   is_admin: boolean;
   created_at: string;
@@ -88,6 +90,13 @@ function Admin() {
   const handleLogout = async () => {
     await signOut();
     window.location.href = '/';
+  };
+
+  const getUserDisplayName = (user: User) => {
+    if (user.first_name && user.last_name) {
+      return `${user.first_name} ${user.last_name}`;
+    }
+    return user.email;
   };
 
   const handleCreateUser = async () => {
@@ -382,8 +391,17 @@ function Admin() {
                           fontWeight: '600',
                           marginBottom: '4px'
                         }}>
-                          {u.email}
+                          {getUserDisplayName(u)}
                         </div>
+                        {u.first_name && u.last_name && (
+                          <div style={{
+                            fontSize: '12px',
+                            color: '#666666',
+                            marginBottom: '4px'
+                          }}>
+                            {u.email}
+                          </div>
+                        )}
                         <div style={{
                           fontSize: '12px',
                           color: '#666666',
