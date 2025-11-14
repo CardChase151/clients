@@ -68,12 +68,15 @@ exports.handler = async (event) => {
     // Wait a moment for the trigger to complete
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Update the user to set approved=true and is_admin=false
+    // Update the user to set approved=false (they need to wait) and is_admin=false
     const { error: updateError } = await supabaseAdmin
       .from('users')
       .update({
-        approved: true,
-        is_admin: false
+        approved: false,  // NOT auto-approved - they wait in the onboarding process
+        is_admin: false,
+        discovery_complete: false,
+        proposal_reviewed: false,
+        invoice_fulfilled: false
       })
       .eq('id', authData.user.id);
 
