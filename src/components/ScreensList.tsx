@@ -119,7 +119,7 @@ function SortableScreenCard({
         style={{
           backgroundColor: '#1A1A1A',
           border: clickOrderIndex !== undefined ? '2px solid #06B6D4' : '1px solid #333333',
-          borderBottom: priorityColor ? `3px solid ${priorityColor === 'red' ? '#EF4444' : '#EAB308'}` : undefined,
+          borderBottom: priorityColor ? `3px solid ${priorityColor === 'red' ? '#EF4444' : '#EAB308'}` : (clickOrderIndex !== undefined ? '2px solid #06B6D4' : '1px solid #333333'),
           borderRadius: '10px',
           padding: '20px',
           cursor: reorderMode === 'drag' ? 'grab' : (priorityMode !== 'none' ? 'pointer' : (reorderMode === 'click' ? 'pointer' : 'pointer')),
