@@ -412,27 +412,28 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
   };
 
   const handleSaveClickOrder = async () => {
-    // Update sort_order based on click order
-    for (let i = 0; i < clickOrder.length; i++) {
-      await supabase
-        .from('screens')
-        .update({ sort_order: i + 1 })
-        .eq('id', clickOrder[i]);
-    }
+    // Reorder screens optimistically
+    const reorderedScreens = [
+      ...clickOrder.map(id => screens.find(s => s.id === id)!),
+      ...screens.filter(s => !clickOrder.includes(s.id))
+    ];
 
-    // Update sort_order for unselected screens (put them after selected ones)
-    const unselectedScreens = screens.filter(s => !clickOrder.includes(s.id));
-    for (let i = 0; i < unselectedScreens.length; i++) {
-      await supabase
-        .from('screens')
-        .update({ sort_order: clickOrder.length + i + 1 })
-        .eq('id', unselectedScreens[i].id);
-    }
+    // Update UI immediately
+    setScreens(reorderedScreens.map((screen, index) => ({
+      ...screen,
+      sort_order: index + 1
+    })));
 
-    // Reset and refresh
     setClickOrder([]);
     setReorderMode('none');
-    fetchScreens();
+
+    // Update database in background
+    for (let i = 0; i < reorderedScreens.length; i++) {
+      supabase
+        .from('screens')
+        .update({ sort_order: i + 1 })
+        .eq('id', reorderedScreens[i].id);
+    }
   };
 
   const handleCancelReorder = () => {
