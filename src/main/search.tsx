@@ -20,6 +20,8 @@ interface Screen {
   project_id: string;
   created_at: string;
   creator?: {
+    first_name: string | null;
+    last_name: string | null;
     email: string;
   };
   project?: {
@@ -35,6 +37,8 @@ interface Task {
   status: 'not_started' | 'in_progress' | 'waiting' | 'done';
   created_at: string;
   creator?: {
+    first_name: string | null;
+    last_name: string | null;
     email: string;
   };
   screen?: {
@@ -58,6 +62,7 @@ type SearchResult = {
     screenId?: string;
     screenName?: string;
     taskStatus?: string;
+    creatorName?: string;
     creatorEmail?: string;
     createdAt?: string;
   };
@@ -99,7 +104,7 @@ function Search() {
             .from('screens')
             .select(`
               *,
-              creator:users!screens_created_by_fkey(email),
+              creator:users!screens_created_by_fkey(first_name, last_name, email),
               project:projects(name)
             `)
             .in('project_id', projectIds);
@@ -115,7 +120,7 @@ function Search() {
               .from('tasks')
               .select(`
                 *,
-                creator:users!tasks_created_by_fkey(email),
+                creator:users!tasks_created_by_fkey(first_name, last_name, email),
                 screen:screens(
                   title,
                   project_id,
@@ -221,6 +226,10 @@ function Search() {
       const maxScore = Math.max(titleScore, descScore);
 
       if (maxScore > 0) {
+        const creatorName = screen.creator?.first_name && screen.creator?.last_name
+          ? `${screen.creator.first_name} ${screen.creator.last_name}`
+          : undefined;
+
         results.push({
           id: screen.id,
           type: 'screen',
@@ -232,6 +241,7 @@ function Search() {
             projectName: screen.project?.name,
             screenId: screen.id,
             screenName: screen.title,
+            creatorName: creatorName,
             creatorEmail: screen.creator?.email,
             createdAt: screen.created_at
           }
@@ -246,6 +256,10 @@ function Search() {
       const maxScore = Math.max(titleScore, descScore);
 
       if (maxScore > 0) {
+        const creatorName = task.creator?.first_name && task.creator?.last_name
+          ? `${task.creator.first_name} ${task.creator.last_name}`
+          : undefined;
+
         results.push({
           id: task.id,
           type: 'task',
@@ -258,6 +272,7 @@ function Search() {
             screenId: task.screen_id,
             screenName: task.screen?.title,
             taskStatus: task.status,
+            creatorName: creatorName,
             creatorEmail: task.creator?.email,
             createdAt: task.created_at
           }
@@ -296,6 +311,37 @@ function Search() {
       case 'waiting': return 'Waiting';
       default: return 'Not Started';
     }
+  };
+
+  // Highlight matching text in search results
+  const highlightText = (text: string, query: string) => {
+    if (!query.trim()) return text;
+
+    const lowerText = text.toLowerCase();
+    const lowerQuery = query.toLowerCase();
+    const index = lowerText.indexOf(lowerQuery);
+
+    if (index === -1) return text;
+
+    const beforeMatch = text.slice(0, index);
+    const match = text.slice(index, index + query.length);
+    const afterMatch = text.slice(index + query.length);
+
+    return (
+      <>
+        {beforeMatch}
+        <span style={{
+          backgroundColor: '#EAB308',
+          color: '#000000',
+          padding: '2px 4px',
+          borderRadius: '3px',
+          fontWeight: '600'
+        }}>
+          {match}
+        </span>
+        {highlightText(afterMatch, query)}
+      </>
+    );
   };
 
   return (
@@ -588,7 +634,7 @@ function Search() {
                     color: '#FFFFFF',
                     marginBottom: '8px'
                   }}>
-                    {result.title}
+                    {highlightText(result.title, searchQuery)}
                   </div>
 
                   {/* Description */}
@@ -604,7 +650,7 @@ function Search() {
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: 'vertical'
                     }}>
-                      {result.description}
+                      {highlightText(result.description, searchQuery)}
                     </div>
                   )}
 
@@ -656,7 +702,7 @@ function Search() {
                     {result.metadata.creatorEmail && (
                       <>
                         <span>•</span>
-                        <span>by {result.metadata.creatorEmail}</span>
+                        <span>by {result.metadata.creatorName || result.metadata.creatorEmail}</span>
                       </>
                     )}
                   </div>

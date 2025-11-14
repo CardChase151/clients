@@ -28,6 +28,8 @@ interface Screen {
   created_by: string;
   sort_order: number;
   creator?: {
+    first_name: string | null;
+    last_name: string | null;
     email: string;
   };
   tasks?: Array<{
@@ -321,7 +323,11 @@ function SortableScreenCard({
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap'
-            }}>by {screen.creator.email}</span>
+            }}>
+              by {screen.creator.first_name && screen.creator.last_name
+                ? `${screen.creator.first_name} ${screen.creator.last_name}`
+                : screen.creator.email}
+            </span>
           )}
           {screen.creator && screen.created_at && (
             <span>•</span>
@@ -363,7 +369,7 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
       .from('screens')
       .select(`
         *,
-        creator:users!screens_created_by_fkey(email),
+        creator:users!screens_created_by_fkey(first_name, last_name, email),
         tasks(id, status)
       `)
       .eq('project_id', projectId)

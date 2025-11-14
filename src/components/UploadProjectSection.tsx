@@ -19,7 +19,8 @@ interface ParsedProject {
 interface User {
   id: string;
   email: string;
-  full_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
 }
 
 interface Project {
@@ -50,7 +51,7 @@ function UploadProjectSection() {
       try {
         const { data, error } = await supabase
           .from('users')
-          .select('id, email, full_name')
+          .select('id, email, first_name, last_name')
           .eq('approved', true)
           .order('email');
 
@@ -433,7 +434,9 @@ function UploadProjectSection() {
             <option value="">-- Select a user --</option>
             {users.map(u => (
               <option key={u.id} value={u.id}>
-                {u.full_name || u.email} ({u.email})
+                {u.first_name && u.last_name
+                  ? `${u.first_name} ${u.last_name} (${u.email})`
+                  : u.email}
               </option>
             ))}
           </select>

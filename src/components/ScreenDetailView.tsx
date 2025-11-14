@@ -33,6 +33,8 @@ interface Task {
   created_by: string;
   sort_order?: number;
   creator?: {
+    first_name: string | null;
+    last_name: string | null;
     email: string;
   };
 }
@@ -44,6 +46,8 @@ interface Screen {
   created_at: string;
   created_by: string;
   creator?: {
+    first_name: string | null;
+    last_name: string | null;
     email: string;
   };
 }
@@ -100,11 +104,11 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
     const [screenResult, tasksResult] = await Promise.all([
       supabase.from('screens').select(`
         *,
-        creator:users!screens_created_by_fkey(email)
+        creator:users!screens_created_by_fkey(first_name, last_name, email)
       `).eq('id', screenId).single(),
       supabase.from('tasks').select(`
         *,
-        creator:users!tasks_created_by_fkey(email)
+        creator:users!tasks_created_by_fkey(first_name, last_name, email)
       `).eq('screen_id', screenId).order('sort_order', { ascending: true })
     ]);
 
@@ -402,7 +406,11 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
                 <circle cx="6" cy="3.5" r="2"/>
                 <path d="M2.5 10.5v-1a2.5 2.5 0 0 1 2.5-2.5h2a2.5 2.5 0 0 1 2.5 2.5v1"/>
               </svg>
-              <span>Created by {screen.creator.email}</span>
+              <span>
+                Created by {screen.creator.first_name && screen.creator.last_name
+                  ? `${screen.creator.first_name} ${screen.creator.last_name}`
+                  : screen.creator.email}
+              </span>
             </div>
           )}
           {screen.created_at && (
@@ -1018,7 +1026,11 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
                     <circle cx="5" cy="3" r="2"/>
                     <path d="M2 9v-1a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1"/>
                   </svg>
-                  <span>{task.creator.email}</span>
+                  <span>
+                    {task.creator.first_name && task.creator.last_name
+                      ? `${task.creator.first_name} ${task.creator.last_name}`
+                      : task.creator.email}
+                  </span>
                 </div>
               )}
               {task.created_at && (

@@ -13,6 +13,9 @@ interface User {
   approved: boolean;
   is_admin: boolean;
   created_at: string;
+  discovery_payment_type: 'paid' | 'waived' | null;
+  proposal_status: 'sent' | 'reviewed' | null;
+  invoice_payment_type: 'paid' | 'waived' | null;
 }
 
 function Admin() {
@@ -29,6 +32,10 @@ function Admin() {
   const [sendEmail, setSendEmail] = useState(false);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
+  const [milestoneModal, setMilestoneModal] = useState<{
+    userId: string;
+    type: 'discovery' | 'proposal' | 'invoice';
+  } | null>(null);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -167,6 +174,40 @@ function Admin() {
 
     } catch (err: any) {
       alert(err.message || 'Failed to delete user');
+    }
+  };
+
+  const handleMilestoneUpdate = async (userId: string, type: 'discovery' | 'proposal' | 'invoice', value: string) => {
+    try {
+      const updateData: any = {};
+
+      if (type === 'discovery') {
+        updateData.discovery_payment_type = value;
+        updateData.discovery_complete = true;
+        updateData.discovery_complete_date = new Date().toISOString();
+      } else if (type === 'proposal') {
+        updateData.proposal_status = value;
+        if (value === 'reviewed') {
+          updateData.proposal_reviewed = true;
+          updateData.proposal_reviewed_date = new Date().toISOString();
+        }
+      } else if (type === 'invoice') {
+        updateData.invoice_payment_type = value;
+        updateData.invoice_fulfilled = true;
+        updateData.invoice_fulfilled_date = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from('users')
+        .update(updateData)
+        .eq('id', userId);
+
+      if (!error) {
+        fetchUsers();
+        setMilestoneModal(null);
+      }
+    } catch (err) {
+      console.error('Error updating milestone:', err);
     }
   };
 
@@ -421,7 +462,84 @@ function Admin() {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '8px' }}>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {/* Milestone Icons */}
+                        {u.approved && !u.is_admin && (
+                          <div style={{ display: 'flex', gap: '6px', marginRight: '8px' }}>
+                            {/* Discovery Icon */}
+                            <button
+                              onClick={() => setMilestoneModal({ userId: u.id, type: 'discovery' })}
+                              title="Discovery"
+                              style={{
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                padding: '6px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'transform 0.2s'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                            >
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill={u.discovery_payment_type ? '#4ADE80' : 'none'} stroke={u.discovery_payment_type ? '#4ADE80' : '#666666'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="11" cy="11" r="8"/>
+                                <path d="M21 21l-4.35-4.35"/>
+                              </svg>
+                            </button>
+
+                            {/* Proposal Icon */}
+                            <button
+                              onClick={() => setMilestoneModal({ userId: u.id, type: 'proposal' })}
+                              title="Proposal"
+                              style={{
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                padding: '6px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'transform 0.2s'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                            >
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill={u.proposal_status ? '#3B82F6' : 'none'} stroke={u.proposal_status ? '#3B82F6' : '#666666'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10 9 9 9 8 9"/>
+                              </svg>
+                            </button>
+
+                            {/* Invoice Icon */}
+                            <button
+                              onClick={() => setMilestoneModal({ userId: u.id, type: 'invoice' })}
+                              title="Invoice"
+                              style={{
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                padding: '6px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'transform 0.2s'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                            >
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill={u.invoice_payment_type ? '#EAB308' : 'none'} stroke={u.invoice_payment_type ? '#EAB308' : '#666666'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="2" y="5" width="20" height="14" rx="2"/>
+                                <line x1="2" y1="10" x2="22" y2="10"/>
+                              </svg>
+                            </button>
+                          </div>
+                        )}
+
                         <button
                           onClick={() => toggleApproval(u.id, u.approved)}
                           style={{
@@ -713,6 +831,210 @@ function Admin() {
                   {creating ? 'Creating...' : 'Create User'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Milestone Modal */}
+      {milestoneModal && (
+        <div
+          onClick={() => setMilestoneModal(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#1A1A1A',
+              border: '1px solid #333333',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '400px',
+              width: '100%'
+            }}
+          >
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#FFFFFF',
+              margin: '0 0 20px 0'
+            }}>
+              {milestoneModal.type === 'discovery' && '🔍 Discovery'}
+              {milestoneModal.type === 'proposal' && '📄 Proposal'}
+              {milestoneModal.type === 'invoice' && '💳 Invoice'}
+            </h3>
+
+            <p style={{
+              fontSize: '14px',
+              color: '#999999',
+              marginBottom: '20px'
+            }}>
+              {milestoneModal.type === 'discovery' && 'How was the discovery phase handled?'}
+              {milestoneModal.type === 'proposal' && 'Update proposal status:'}
+              {milestoneModal.type === 'invoice' && 'How was the invoice handled?'}
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {milestoneModal.type === 'discovery' && (
+                <>
+                  <button
+                    onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'discovery', 'paid')}
+                    style={{
+                      backgroundColor: '#4ADE80',
+                      color: '#000000',
+                      border: 'none',
+                      padding: '14px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                  >
+                    💵 Paid
+                  </button>
+                  <button
+                    onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'discovery', 'waived')}
+                    style={{
+                      backgroundColor: '#3B82F6',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      padding: '14px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                  >
+                    ✨ Waived
+                  </button>
+                </>
+              )}
+
+              {milestoneModal.type === 'proposal' && (
+                <>
+                  <button
+                    onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'proposal', 'sent')}
+                    style={{
+                      backgroundColor: '#EAB308',
+                      color: '#000000',
+                      border: 'none',
+                      padding: '14px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                  >
+                    📤 Sent
+                  </button>
+                  <button
+                    onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'proposal', 'reviewed')}
+                    style={{
+                      backgroundColor: '#3B82F6',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      padding: '14px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                  >
+                    ✅ Reviewed
+                  </button>
+                </>
+              )}
+
+              {milestoneModal.type === 'invoice' && (
+                <>
+                  <button
+                    onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'invoice', 'paid')}
+                    style={{
+                      backgroundColor: '#4ADE80',
+                      color: '#000000',
+                      border: 'none',
+                      padding: '14px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                  >
+                    💵 Paid
+                  </button>
+                  <button
+                    onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'invoice', 'waived')}
+                    style={{
+                      backgroundColor: '#3B82F6',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      padding: '14px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                  >
+                    ✨ Waived
+                  </button>
+                </>
+              )}
+
+              <button
+                onClick={() => setMilestoneModal(null)}
+                style={{
+                  backgroundColor: 'transparent',
+                  color: '#666666',
+                  border: '1px solid #333333',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  marginTop: '8px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#1A1A1A';
+                  e.currentTarget.style.color = '#FFFFFF';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#666666';
+                }}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
