@@ -910,14 +910,14 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
               gap: '8px'
             }}>
               <button
-                onClick={() => handleStatusChange(task.id, 'in_progress')}
+                onClick={isAdmin ? () => handleStatusChange(task.id, 'in_progress') : undefined}
                 style={{
                   flex: 1,
                   backgroundColor: task.status === 'in_progress' ? '#3B82F6' : '#000000',
                   border: task.status === 'in_progress' ? 'none' : '1px solid #1A1A1A',
                   borderRadius: '6px',
                   padding: '10px',
-                  cursor: 'pointer',
+                  cursor: isAdmin ? 'pointer' : 'default',
                   transition: 'all 0.2s',
                   display: 'flex',
                   flexDirection: 'column',
@@ -926,13 +926,13 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
                   opacity: task.status === 'in_progress' ? 1 : 0.4
                 }}
                 onMouseEnter={(e) => {
-                  if (task.status !== 'in_progress') {
+                  if (isAdmin && task.status !== 'in_progress') {
                     e.currentTarget.style.opacity = '0.6';
                     e.currentTarget.style.borderColor = '#3B82F640';
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (task.status !== 'in_progress') {
+                  if (isAdmin && task.status !== 'in_progress') {
                     e.currentTarget.style.opacity = '0.4';
                     e.currentTarget.style.borderColor = '#1A1A1A';
                   }
@@ -961,14 +961,14 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
               </button>
 
               <button
-                onClick={() => handleStatusChange(task.id, 'done')}
+                onClick={isAdmin ? () => handleStatusChange(task.id, 'done') : undefined}
                 style={{
                   flex: 1,
                   backgroundColor: task.status === 'done' ? '#22C55E' : '#000000',
                   border: task.status === 'done' ? 'none' : '1px solid #1A1A1A',
                   borderRadius: '6px',
                   padding: '10px',
-                  cursor: 'pointer',
+                  cursor: isAdmin ? 'pointer' : 'default',
                   transition: 'all 0.2s',
                   display: 'flex',
                   flexDirection: 'column',
@@ -977,13 +977,13 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
                   opacity: task.status === 'done' ? 1 : 0.4
                 }}
                 onMouseEnter={(e) => {
-                  if (task.status !== 'done') {
+                  if (isAdmin && task.status !== 'done') {
                     e.currentTarget.style.opacity = '0.6';
                     e.currentTarget.style.borderColor = '#22C55E40';
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (task.status !== 'done') {
+                  if (isAdmin && task.status !== 'done') {
                     e.currentTarget.style.opacity = '0.4';
                     e.currentTarget.style.borderColor = '#1A1A1A';
                   }
