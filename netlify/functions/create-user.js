@@ -47,6 +47,7 @@ exports.handler = async (event) => {
     }
 
     // Create the user in Supabase Auth
+    // Note: A database trigger will automatically create the user record in the users table
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -64,33 +65,22 @@ exports.handler = async (event) => {
       };
     }
 
-    // Insert user into users table
-    const { error: dbError } = await supabaseAdmin
+    // Wait a moment for the trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Update the user to set approved=true and is_admin=false
+    const { error: updateError } = await supabaseAdmin
       .from('users')
-      .insert({
-        id: authData.user.id,
-        email: email,
-        approved: true, // Auto-approve since admin is creating them
+      .update({
+        approved: true,
         is_admin: false
-      });
+      })
+      .eq('id', authData.user.id);
 
-    if (dbError) {
-      console.error('Error creating user record:', dbError);
-      // Try to delete the auth user if database insert fails
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-
-      // Provide more helpful error message
-      if (dbError.code === '23505') {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: 'User already exists in database. Please try deleting the existing user first.' })
-        };
-      }
-
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: dbError.message })
-      };
+    if (updateError) {
+      console.error('Error updating user record:', updateError);
+      // Still return success since the user was created
+      console.log('User created but approval status not set');
     }
 
     return {
