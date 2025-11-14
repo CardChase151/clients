@@ -100,7 +100,7 @@ function Home() {
       // Clear the navigation state to prevent re-opening on refresh
       window.history.replaceState({}, document.title);
     }
-  }, [location]);
+  }, [location, setSelectedProjectId]);
 
   const handleLogout = async () => {
     await signOut();

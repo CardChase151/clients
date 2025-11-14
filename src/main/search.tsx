@@ -66,7 +66,6 @@ type SearchResult = {
 
 function Search() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { selectedUserId, selectedProjectId, setSelectedProjectId, isAdmin } = useProject();
   const [searchQuery, setSearchQuery] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
