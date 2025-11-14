@@ -135,6 +135,12 @@ function SortableScreenCard({
             e.currentTarget.style.borderColor = '#FFFFFF';
             e.currentTarget.style.transform = 'translateY(-2px)';
             e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5)';
+            // Keep priority color on bottom but make it thicker on hover
+            if (priorityColor) {
+              e.currentTarget.style.borderBottom = `4px solid ${priorityColor === 'red' ? '#EF4444' : '#EAB308'}`;
+            } else {
+              e.currentTarget.style.borderBottom = '1px solid #FFFFFF';
+            }
           }
         }}
         onMouseLeave={(e) => {
@@ -145,6 +151,8 @@ function SortableScreenCard({
             // Restore priority border if it exists
             if (priorityColor) {
               e.currentTarget.style.borderBottom = `3px solid ${priorityColor === 'red' ? '#EF4444' : '#EAB308'}`;
+            } else {
+              e.currentTarget.style.borderBottom = '1px solid #333333';
             }
           }
         }}
