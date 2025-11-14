@@ -13,11 +13,11 @@ import UserDropdown from '../components/UserDropdown';
 import CompleteProfileModal from '../components/CompleteProfileModal';
 
 interface OnboardingMilestones {
-  discovery_complete: boolean;
+  discovery_payment_type: 'sent' | 'paid' | 'waived' | null;
   discovery_complete_date: string | null;
-  proposal_reviewed: boolean;
+  proposal_status: 'sent' | 'reviewed' | null;
   proposal_reviewed_date: string | null;
-  invoice_fulfilled: boolean;
+  invoice_payment_type: 'sent' | 'paid' | 'waived' | null;
   invoice_fulfilled_date: string | null;
 }
 
@@ -34,11 +34,11 @@ function Home() {
   const [projectRefreshTrigger, setProjectRefreshTrigger] = useState(0);
   const [screenRefreshTrigger, setScreenRefreshTrigger] = useState(0);
   const [milestones, setMilestones] = useState<OnboardingMilestones>({
-    discovery_complete: false,
+    discovery_payment_type: null,
     discovery_complete_date: null,
-    proposal_reviewed: false,
+    proposal_status: null,
     proposal_reviewed_date: null,
-    invoice_fulfilled: false,
+    invoice_payment_type: null,
     invoice_fulfilled_date: null
   });
 
@@ -51,7 +51,7 @@ function Home() {
       try {
         const { data, error} = await supabase
           .from('users')
-          .select('approved, is_admin, profile_complete, discovery_complete, discovery_complete_date, proposal_reviewed, proposal_reviewed_date, invoice_fulfilled, invoice_fulfilled_date')
+          .select('approved, is_admin, profile_complete, discovery_payment_type, discovery_complete_date, proposal_status, proposal_reviewed_date, invoice_payment_type, invoice_fulfilled_date')
           .eq('id', user.id)
           .single();
 
@@ -66,11 +66,11 @@ function Home() {
 
           // Set milestones
           setMilestones({
-            discovery_complete: data?.discovery_complete || false,
+            discovery_payment_type: data?.discovery_payment_type || null,
             discovery_complete_date: data?.discovery_complete_date || null,
-            proposal_reviewed: data?.proposal_reviewed || false,
+            proposal_status: data?.proposal_status || null,
             proposal_reviewed_date: data?.proposal_reviewed_date || null,
-            invoice_fulfilled: data?.invoice_fulfilled || false,
+            invoice_payment_type: data?.invoice_payment_type || null,
             invoice_fulfilled_date: data?.invoice_fulfilled_date || null
           });
         }
@@ -107,34 +107,26 @@ function Home() {
     window.location.href = '/';
   };
 
-  const toggleMilestone = async (milestone: 'discovery_complete' | 'proposal_reviewed' | 'invoice_fulfilled') => {
-    if (!contextIsAdmin || !user) return;
-
-    const currentValue = milestones[milestone];
-    const dateField = `${milestone}_date` as keyof OnboardingMilestones;
-
-    try {
-      const updateData: any = {
-        [milestone]: !currentValue,
-        [dateField]: !currentValue ? new Date().toISOString() : null
-      };
-
-      const { error } = await supabase
-        .from('users')
-        .update(updateData)
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      // Update local state
-      setMilestones({
-        ...milestones,
-        [milestone]: !currentValue,
-        [dateField]: !currentValue ? new Date().toISOString() : null
-      });
-    } catch (err) {
-      console.error('Error toggling milestone:', err);
+  const getMilestoneDisplay = (type: 'discovery' | 'proposal' | 'invoice') => {
+    if (type === 'discovery') {
+      const status = milestones.discovery_payment_type;
+      if (!status) return { text: 'Pending', color: '#666666', completed: false };
+      if (status === 'sent') return { text: 'Sent', color: '#EAB308', completed: true };
+      if (status === 'paid') return { text: 'Paid', color: '#4ADE80', completed: true };
+      if (status === 'waived') return { text: 'Waived', color: '#3B82F6', completed: true };
+    } else if (type === 'proposal') {
+      const status = milestones.proposal_status;
+      if (!status) return { text: 'Pending', color: '#666666', completed: false };
+      if (status === 'sent') return { text: 'Sent', color: '#EAB308', completed: true };
+      if (status === 'reviewed') return { text: 'Reviewed', color: '#3B82F6', completed: true };
+    } else if (type === 'invoice') {
+      const status = milestones.invoice_payment_type;
+      if (!status) return { text: 'Pending', color: '#666666', completed: false };
+      if (status === 'sent') return { text: 'Sent', color: '#EAB308', completed: true };
+      if (status === 'paid') return { text: 'Paid', color: '#4ADE80', completed: true };
+      if (status === 'waived') return { text: 'Waived', color: '#3B82F6', completed: true };
     }
+    return { text: 'Pending', color: '#666666', completed: false };
   };
 
   if (loading) {
@@ -264,196 +256,210 @@ function Home() {
             You will receive communication once you are able to work on your app
           </p>
 
-          {/* Onboarding Milestones */}
+          {/* Onboarding Milestones - Horizontal Cards */}
           <div style={{
             width: '100%',
-            maxWidth: '500px',
-            backgroundColor: '#0A0A0A',
-            border: '1px solid #333333',
-            borderRadius: '12px',
-            padding: '24px'
+            maxWidth: '900px'
           }}>
             <h3 style={{
               fontSize: '16px',
               fontWeight: '600',
               marginBottom: '20px',
-              color: '#FFFFFF'
+              color: '#FFFFFF',
+              textAlign: 'center'
             }}>
               Progress Milestones
             </h3>
 
-            {/* Milestone 1 */}
-            <div
-              onClick={() => toggleMilestone('discovery_complete')}
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '12px',
-                padding: '12px',
-                borderRadius: '8px',
-                marginBottom: '12px',
-                backgroundColor: contextIsAdmin ? '#1A1A1A' : 'transparent',
-                cursor: contextIsAdmin ? 'pointer' : 'default',
-                transition: 'background-color 0.2s'
-              }}
-            >
-              <div style={{
-                width: '20px',
-                height: '20px',
-                borderRadius: '4px',
-                border: `2px solid ${milestones.discovery_complete ? '#4ADE80' : '#666666'}`,
-                backgroundColor: milestones.discovery_complete ? '#4ADE80' : 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                marginTop: '2px'
-              }}>
-                {milestones.discovery_complete && (
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 6L5 9L10 3" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: milestones.discovery_complete ? '#FFFFFF' : '#999999'
-                }}>
-                  Initial Discovery Period Complete
-                </div>
-                {milestones.discovery_complete_date && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '16px',
+              width: '100%'
+            }}>
+              {/* Discovery Card */}
+              {(() => {
+                const discovery = getMilestoneDisplay('discovery');
+                return (
                   <div style={{
-                    fontSize: '12px',
-                    color: '#666666',
-                    marginTop: '4px'
+                    backgroundColor: '#0A0A0A',
+                    border: `1px solid ${discovery.completed ? discovery.color : '#333333'}`,
+                    borderRadius: '12px',
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '12px',
+                    transition: 'all 0.2s'
                   }}>
-                    Completed: {new Date(milestones.discovery_complete_date).toLocaleDateString()}
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      border: `2px solid ${discovery.completed ? discovery.color : '#666666'}`,
+                      backgroundColor: discovery.completed ? discovery.color : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      {discovery.completed && (
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <path d="M3 8L6 11L13 4" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#FFFFFF',
+                        marginBottom: '4px'
+                      }}>
+                        Discovery Period
+                      </div>
+                      <div style={{
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        color: discovery.color
+                      }}>
+                        {discovery.text}
+                      </div>
+                      {milestones.discovery_complete_date && (
+                        <div style={{
+                          fontSize: '11px',
+                          color: '#666666',
+                          marginTop: '4px'
+                        }}>
+                          {new Date(milestones.discovery_complete_date).toLocaleDateString()}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-            </div>
+                );
+              })()}
 
-            {/* Milestone 2 */}
-            <div
-              onClick={() => toggleMilestone('proposal_reviewed')}
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '12px',
-                padding: '12px',
-                borderRadius: '8px',
-                marginBottom: '12px',
-                backgroundColor: contextIsAdmin ? '#1A1A1A' : 'transparent',
-                cursor: contextIsAdmin ? 'pointer' : 'default',
-                transition: 'background-color 0.2s'
-              }}
-            >
-              <div style={{
-                width: '20px',
-                height: '20px',
-                borderRadius: '4px',
-                border: `2px solid ${milestones.proposal_reviewed ? '#4ADE80' : '#666666'}`,
-                backgroundColor: milestones.proposal_reviewed ? '#4ADE80' : 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                marginTop: '2px'
-              }}>
-                {milestones.proposal_reviewed && (
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 6L5 9L10 3" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: milestones.proposal_reviewed ? '#FFFFFF' : '#999999'
-                }}>
-                  Proposal Reviewed
-                </div>
-                {milestones.proposal_reviewed_date && (
+              {/* Proposal Card */}
+              {(() => {
+                const proposal = getMilestoneDisplay('proposal');
+                return (
                   <div style={{
-                    fontSize: '12px',
-                    color: '#666666',
-                    marginTop: '4px'
+                    backgroundColor: '#0A0A0A',
+                    border: `1px solid ${proposal.completed ? proposal.color : '#333333'}`,
+                    borderRadius: '12px',
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '12px',
+                    transition: 'all 0.2s'
                   }}>
-                    Completed: {new Date(milestones.proposal_reviewed_date).toLocaleDateString()}
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      border: `2px solid ${proposal.completed ? proposal.color : '#666666'}`,
+                      backgroundColor: proposal.completed ? proposal.color : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      {proposal.completed && (
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <path d="M3 8L6 11L13 4" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#FFFFFF',
+                        marginBottom: '4px'
+                      }}>
+                        Proposal
+                      </div>
+                      <div style={{
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        color: proposal.color
+                      }}>
+                        {proposal.text}
+                      </div>
+                      {milestones.proposal_reviewed_date && (
+                        <div style={{
+                          fontSize: '11px',
+                          color: '#666666',
+                          marginTop: '4px'
+                        }}>
+                          {new Date(milestones.proposal_reviewed_date).toLocaleDateString()}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-            </div>
+                );
+              })()}
 
-            {/* Milestone 3 */}
-            <div
-              onClick={() => toggleMilestone('invoice_fulfilled')}
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '12px',
-                padding: '12px',
-                borderRadius: '8px',
-                backgroundColor: contextIsAdmin ? '#1A1A1A' : 'transparent',
-                cursor: contextIsAdmin ? 'pointer' : 'default',
-                transition: 'background-color 0.2s'
-              }}
-            >
-              <div style={{
-                width: '20px',
-                height: '20px',
-                borderRadius: '4px',
-                border: `2px solid ${milestones.invoice_fulfilled ? '#4ADE80' : '#666666'}`,
-                backgroundColor: milestones.invoice_fulfilled ? '#4ADE80' : 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                marginTop: '2px'
-              }}>
-                {milestones.invoice_fulfilled && (
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 6L5 9L10 3" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: milestones.invoice_fulfilled ? '#FFFFFF' : '#999999'
-                }}>
-                  Invoice Fulfilled
-                </div>
-                {milestones.invoice_fulfilled_date && (
+              {/* Invoice Card */}
+              {(() => {
+                const invoice = getMilestoneDisplay('invoice');
+                return (
                   <div style={{
-                    fontSize: '12px',
-                    color: '#666666',
-                    marginTop: '4px'
+                    backgroundColor: '#0A0A0A',
+                    border: `1px solid ${invoice.completed ? invoice.color : '#333333'}`,
+                    borderRadius: '12px',
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '12px',
+                    transition: 'all 0.2s'
                   }}>
-                    Completed: {new Date(milestones.invoice_fulfilled_date).toLocaleDateString()}
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      border: `2px solid ${invoice.completed ? invoice.color : '#666666'}`,
+                      backgroundColor: invoice.completed ? invoice.color : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      {invoice.completed && (
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <path d="M3 8L6 11L13 4" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#FFFFFF',
+                        marginBottom: '4px'
+                      }}>
+                        Invoice
+                      </div>
+                      <div style={{
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        color: invoice.color
+                      }}>
+                        {invoice.text}
+                      </div>
+                      {milestones.invoice_fulfilled_date && (
+                        <div style={{
+                          fontSize: '11px',
+                          color: '#666666',
+                          marginTop: '4px'
+                        }}>
+                          {new Date(milestones.invoice_fulfilled_date).toLocaleDateString()}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
+                );
+              })()}
             </div>
-
-            {contextIsAdmin && (
-              <div style={{
-                marginTop: '16px',
-                padding: '12px',
-                backgroundColor: '#0A0A0A',
-                border: '1px solid #333333',
-                borderRadius: '8px',
-                fontSize: '12px',
-                color: '#666666',
-                textAlign: 'center'
-              }}>
-                ⚠️ Admin: Click milestones to toggle completion
-              </div>
-            )}
           </div>
         </div>
 

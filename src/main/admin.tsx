@@ -871,9 +871,9 @@ function Admin() {
               color: '#FFFFFF',
               margin: '0 0 20px 0'
             }}>
-              {milestoneModal.type === 'discovery' && '🔍 Discovery'}
-              {milestoneModal.type === 'proposal' && '📄 Proposal'}
-              {milestoneModal.type === 'invoice' && '💳 Invoice'}
+              {milestoneModal.type === 'discovery' && 'Discovery Period'}
+              {milestoneModal.type === 'proposal' && 'Proposal'}
+              {milestoneModal.type === 'invoice' && 'Invoice'}
             </h3>
 
             <p style={{
@@ -881,14 +881,32 @@ function Admin() {
               color: '#999999',
               marginBottom: '20px'
             }}>
-              {milestoneModal.type === 'discovery' && 'How was the discovery phase handled?'}
-              {milestoneModal.type === 'proposal' && 'Update proposal status:'}
-              {milestoneModal.type === 'invoice' && 'How was the invoice handled?'}
+              {milestoneModal.type === 'discovery' && 'Select discovery period status:'}
+              {milestoneModal.type === 'proposal' && 'Select proposal status:'}
+              {milestoneModal.type === 'invoice' && 'Select invoice status:'}
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {milestoneModal.type === 'discovery' && (
                 <>
+                  <button
+                    onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'discovery', 'sent')}
+                    style={{
+                      backgroundColor: '#EAB308',
+                      color: '#000000',
+                      border: 'none',
+                      padding: '14px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                  >
+                    Sent
+                  </button>
                   <button
                     onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'discovery', 'paid')}
                     style={{
@@ -905,7 +923,7 @@ function Admin() {
                     onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
                     onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
-                    💵 Paid
+                    Paid
                   </button>
                   <button
                     onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'discovery', 'waived')}
@@ -923,7 +941,7 @@ function Admin() {
                     onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
                     onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
-                    ✨ Waived
+                    Waived
                   </button>
                 </>
               )}
@@ -946,7 +964,7 @@ function Admin() {
                     onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
                     onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
-                    📤 Sent
+                    Sent
                   </button>
                   <button
                     onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'proposal', 'reviewed')}
@@ -964,13 +982,31 @@ function Admin() {
                     onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
                     onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
-                    ✅ Reviewed
+                    Reviewed
                   </button>
                 </>
               )}
 
               {milestoneModal.type === 'invoice' && (
                 <>
+                  <button
+                    onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'invoice', 'sent')}
+                    style={{
+                      backgroundColor: '#EAB308',
+                      color: '#000000',
+                      border: 'none',
+                      padding: '14px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                  >
+                    Sent
+                  </button>
                   <button
                     onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'invoice', 'paid')}
                     style={{
@@ -987,7 +1023,7 @@ function Admin() {
                     onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
                     onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
-                    💵 Paid
+                    Paid
                   </button>
                   <button
                     onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'invoice', 'waived')}
@@ -1005,7 +1041,7 @@ function Admin() {
                     onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
                     onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
-                    ✨ Waived
+                    Waived
                   </button>
                 </>
               )}
