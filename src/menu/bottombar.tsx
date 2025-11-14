@@ -56,8 +56,6 @@ function BottomBar({ activeTab }: BottomBarProps) {
   const baseTabs = [
     { id: 'home', path: '/', label: 'Home', icon: <HomeIcon /> },
     { id: 'search', path: '/search', label: 'Search', icon: <SearchIcon /> },
-    { id: 'saved', path: '/saved', label: 'Saved', icon: <HeartIcon /> },
-    { id: 'calendar', path: '/calendar', label: 'Calendar', icon: <CalendarIcon /> },
     { id: 'profile', path: '/profile', label: 'Profile', icon: <ProfileIcon /> }
   ];
 
