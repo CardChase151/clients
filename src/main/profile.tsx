@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../config/supabase';
 import BottomBar from '../menu/bottombar';
 
 function Profile() {
-  const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [userInfo, setUserInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -15,11 +13,7 @@ function Profile() {
   const [resetting, setResetting] = useState(false);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    fetchUserInfo();
-  }, [user]);
-
-  const fetchUserInfo = async () => {
+  const fetchUserInfo = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -37,7 +31,11 @@ function Profile() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    fetchUserInfo();
+  }, [fetchUserInfo]);
 
   const handlePasswordReset = async () => {
     if (newPassword !== confirmPassword) {
