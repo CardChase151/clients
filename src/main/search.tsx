@@ -69,96 +69,94 @@ function Search() {
   const [screens, setScreens] = useState<Screen[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('users')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single();
+
+      const adminStatus = data?.is_admin || false;
+
+      // Set selected user to current user if not admin
+      if (!adminStatus) {
+        setSelectedUserId(user.id);
+      } else {
+        setSelectedUserId(user.id); // Default to self for admin too
+      }
+    };
+
     fetchUserData();
   }, [user]);
 
   useEffect(() => {
+    const fetchAllData = async () => {
+      if (!selectedUserId) return;
+
+      setLoading(true);
+
+      try {
+        // Fetch projects
+        const { data: projectsData } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('user_id', selectedUserId);
+
+        setProjects(projectsData || []);
+
+        // Get all project IDs
+        const projectIds = (projectsData || []).map(p => p.id);
+
+        if (projectIds.length > 0) {
+          // Fetch screens for these projects
+          const { data: screensData } = await supabase
+            .from('screens')
+            .select(`
+              *,
+              creator:users!created_by(email),
+              project:projects(name)
+            `)
+            .in('project_id', projectIds);
+
+          setScreens(screensData || []);
+
+          // Get all screen IDs
+          const screenIds = (screensData || []).map(s => s.id);
+
+          if (screenIds.length > 0) {
+            // Fetch tasks for these screens
+            const { data: tasksData } = await supabase
+              .from('tasks')
+              .select(`
+                *,
+                creator:users!created_by(email),
+                screen:screens(
+                  title,
+                  project_id,
+                  project:projects(name)
+                )
+              `)
+              .in('screen_id', screenIds);
+
+            setTasks(tasksData || []);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching search data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (selectedUserId) {
       fetchAllData();
     }
   }, [selectedUserId]);
-
-  const fetchUserData = async () => {
-    if (!user) return;
-
-    const { data } = await supabase
-      .from('users')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single();
-
-    const adminStatus = data?.is_admin || false;
-    setIsAdmin(adminStatus);
-
-    // Set selected user to current user if not admin
-    if (!adminStatus) {
-      setSelectedUserId(user.id);
-    } else {
-      setSelectedUserId(user.id); // Default to self for admin too
-    }
-  };
-
-  const fetchAllData = async () => {
-    if (!selectedUserId) return;
-
-    setLoading(true);
-
-    try {
-      // Fetch projects
-      const { data: projectsData } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user_id', selectedUserId);
-
-      setProjects(projectsData || []);
-
-      // Get all project IDs
-      const projectIds = (projectsData || []).map(p => p.id);
-
-      if (projectIds.length > 0) {
-        // Fetch screens for these projects
-        const { data: screensData } = await supabase
-          .from('screens')
-          .select(`
-            *,
-            creator:users!created_by(email),
-            project:projects(name)
-          `)
-          .in('project_id', projectIds);
-
-        setScreens(screensData || []);
-
-        // Get all screen IDs
-        const screenIds = (screensData || []).map(s => s.id);
-
-        if (screenIds.length > 0) {
-          // Fetch tasks for these screens
-          const { data: tasksData } = await supabase
-            .from('tasks')
-            .select(`
-              *,
-              creator:users!created_by(email),
-              screen:screens(
-                title,
-                project_id,
-                project:projects(name)
-              )
-            `)
-            .in('screen_id', screenIds);
-
-          setTasks(tasksData || []);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching search data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Fuzzy search with scoring
   const calculateScore = (text: string, query: string): number => {
