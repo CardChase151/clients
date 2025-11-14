@@ -99,7 +99,7 @@ function Search() {
             .from('screens')
             .select(`
               *,
-              creator:users!created_by(email),
+              creator:users!screens_created_by_fkey(email),
               project:projects(name)
             `)
             .in('project_id', projectIds);
@@ -115,6 +115,7 @@ function Search() {
               .from('tasks')
               .select(`
                 *,
+                creator:users!tasks_created_by_fkey(email),
                 screen:screens(
                   title,
                   project_id,

@@ -363,6 +363,7 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
       .from('screens')
       .select(`
         *,
+        creator:users!screens_created_by_fkey(email),
         tasks(id, status)
       `)
       .eq('project_id', projectId)

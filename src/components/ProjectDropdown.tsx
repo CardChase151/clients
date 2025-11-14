@@ -47,7 +47,7 @@ function ProjectDropdown({ selectedProjectId, onProjectSelect, onAddProject, ref
       .from('projects')
       .select(`
         *,
-        creator:users!created_by(email)
+        creator:users!projects_created_by_fkey(email)
       `)
       .eq('created_by', selectedUserId)
       .order('created_at', { ascending: false });
