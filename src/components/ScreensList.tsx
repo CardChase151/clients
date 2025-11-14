@@ -354,6 +354,7 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
 
   useEffect(() => {
     fetchScreens();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, refreshTrigger]);
 
   const fetchScreens = async () => {

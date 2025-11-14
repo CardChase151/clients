@@ -29,6 +29,7 @@ function HistoryModal({ isOpen, onClose, itemId, itemType, itemTitle }: HistoryM
     if (isOpen) {
       fetchHistory();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, itemId, itemType]);
 
   const fetchHistory = async () => {

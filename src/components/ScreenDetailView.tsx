@@ -78,6 +78,7 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
 
   useEffect(() => {
     fetchScreenAndTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screenId, refreshTrigger]);
 
   useEffect(() => {
@@ -153,23 +154,6 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
     }
   };
 
-  const getStatusLabel = (status: Task['status']) => {
-    switch (status) {
-      case 'not_started': return 'Not Started';
-      case 'in_progress': return 'In Progress';
-      case 'waiting': return 'Waiting';
-      case 'done': return 'Done';
-    }
-  };
-
-  const getStatusColor = (status: Task['status']) => {
-    switch (status) {
-      case 'not_started': return '#64748B';
-      case 'in_progress': return '#3B82F6';
-      case 'waiting': return '#F59E0B';
-      case 'done': return '#22C55E';
-    }
-  };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;

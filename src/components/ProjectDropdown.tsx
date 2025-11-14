@@ -25,7 +25,7 @@ interface ProjectDropdownProps {
 function ProjectDropdown({ selectedProjectId, onProjectSelect, onAddProject, refreshTrigger, userId }: ProjectDropdownProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
 
   useEffect(() => {
     if (userId) {
@@ -33,6 +33,7 @@ function ProjectDropdown({ selectedProjectId, onProjectSelect, onAddProject, ref
     } else {
       setProjects([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshTrigger, userId]);
 
   const fetchProjects = async () => {

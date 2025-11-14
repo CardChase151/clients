@@ -20,6 +20,7 @@ function UserDropdown({ selectedUserId, onUserSelect, refreshTrigger }: UserDrop
 
   useEffect(() => {
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshTrigger]);
 
   const fetchUsers = async () => {

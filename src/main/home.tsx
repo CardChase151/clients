@@ -11,7 +11,7 @@ import ScreenDetailView from '../components/ScreenDetailView';
 import UserDropdown from '../components/UserDropdown';
 
 function Home() {
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const { signOut, user } = useAuth();
   const [approved, setApproved] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
