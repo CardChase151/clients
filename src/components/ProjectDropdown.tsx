@@ -25,7 +25,6 @@ interface ProjectDropdownProps {
 function ProjectDropdown({ selectedProjectId, onProjectSelect, onAddProject, refreshTrigger, userId }: ProjectDropdownProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const { } = useAuth();
 
   useEffect(() => {
     if (userId) {
