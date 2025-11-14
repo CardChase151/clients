@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../config/supabase';
-import { useAuth } from '../context/AuthContext';
 
 interface Project {
   id: string;
