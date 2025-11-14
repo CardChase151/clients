@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../config/supabase';
 import { useAuth } from '../context/AuthContext';
+import { useProject } from '../context/ProjectContext';
 
 interface User {
   id: string;
@@ -15,10 +16,11 @@ interface UserDropdownProps {
   refreshTrigger?: number;
 }
 
-function UserDropdown({ selectedUserId, onUserSelect, refreshTrigger }: UserDropdownProps) {
+function UserDropdown({ onUserSelect, refreshTrigger }: UserDropdownProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
+  const { selectedUserId, setSelectedUserId } = useProject();
 
   useEffect(() => {
     fetchUsers();
@@ -94,6 +96,7 @@ function UserDropdown({ selectedUserId, onUserSelect, refreshTrigger }: UserDrop
             <div
               key={user.id}
               onClick={() => {
+                setSelectedUserId(user.id);
                 onUserSelect(user.id);
                 setIsOpen(false);
               }}

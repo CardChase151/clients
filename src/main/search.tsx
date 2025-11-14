@@ -176,8 +176,21 @@ function Search() {
     const results: SearchResult[] = [];
     const query = searchQuery.trim();
 
+    // Filter data by selected project if one is selected
+    const filteredProjects = selectedProjectId
+      ? projects.filter(p => p.id === selectedProjectId)
+      : projects;
+
+    const filteredScreens = selectedProjectId
+      ? screens.filter(s => s.project_id === selectedProjectId)
+      : screens;
+
+    const filteredTasks = selectedProjectId
+      ? tasks.filter(t => t.screen?.project_id === selectedProjectId)
+      : tasks;
+
     // Search projects
-    projects.forEach(project => {
+    filteredProjects.forEach(project => {
       const titleScore = calculateScore(project.name, query);
       const descScore = project.description ? calculateScore(project.description, query) : 0;
       const maxScore = Math.max(titleScore, descScore);
@@ -198,7 +211,7 @@ function Search() {
     });
 
     // Search screens
-    screens.forEach(screen => {
+    filteredScreens.forEach(screen => {
       const titleScore = calculateScore(screen.title, query);
       const descScore = screen.description ? calculateScore(screen.description, query) : 0;
       const maxScore = Math.max(titleScore, descScore);
@@ -223,7 +236,7 @@ function Search() {
     });
 
     // Search tasks
-    tasks.forEach(task => {
+    filteredTasks.forEach(task => {
       const titleScore = calculateScore(task.title, query);
       const descScore = task.description ? calculateScore(task.description, query) : 0;
       const maxScore = Math.max(titleScore, descScore);
@@ -250,7 +263,7 @@ function Search() {
 
     // Sort by score descending
     return results.sort((a, b) => b.score - a.score);
-  }, [searchQuery, projects, screens, tasks]);
+  }, [searchQuery, projects, screens, tasks, selectedProjectId]);
 
   const handleResultClick = (result: SearchResult) => {
     // Navigate to home with state to open the correct view
@@ -352,14 +365,20 @@ function Search() {
           <UserDropdown
             selectedUserId={selectedUserId}
             onUserSelect={(userId) => {
-              // User selection is handled by context
+              // Context handles this through setSelectedUserId, but we don't have direct access
+              // The UserDropdown should trigger context updates
             }}
           />
         )}
         <ProjectDropdown
           selectedProjectId={selectedProjectId}
-          onProjectSelect={setSelectedProjectId}
-          onAddProject={() => {}}
+          onProjectSelect={(projectId) => {
+            console.log('Search: Project selected:', projectId);
+            setSelectedProjectId(projectId);
+          }}
+          onAddProject={() => {
+            // Could open add project modal if needed
+          }}
         />
       </div>
 
