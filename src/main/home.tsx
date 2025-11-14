@@ -23,7 +23,7 @@ interface OnboardingMilestones {
 
 function Home() {
   const location = useLocation();
-  const { signOut, user, isAdmin: contextIsAdmin } = useAuth();
+  const { signOut, user } = useAuth();
   const { selectedUserId, selectedProjectId, setSelectedUserId, setSelectedProjectId, isAdmin } = useProject();
   const [approved, setApproved] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
