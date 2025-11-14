@@ -314,7 +314,7 @@ function Search() {
   };
 
   // Highlight matching text in search results
-  const highlightText = (text: string, query: string) => {
+  const highlightText = (text: string, query: string): React.ReactNode => {
     if (!query.trim()) return text;
 
     const lowerText = text.toLowerCase();
