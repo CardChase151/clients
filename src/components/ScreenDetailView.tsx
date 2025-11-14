@@ -99,12 +99,10 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
 
     const [screenResult, tasksResult] = await Promise.all([
       supabase.from('screens').select(`
-        *,
-        creator:users!created_by(email)
+        *
       `).eq('id', screenId).single(),
       supabase.from('tasks').select(`
-        *,
-        creator:users!created_by(email)
+        *
       `).eq('screen_id', screenId).order('sort_order', { ascending: true })
     ]);
 
