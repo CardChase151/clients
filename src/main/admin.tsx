@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../config/supabase';
 import BottomBar from '../menu/bottombar';
 import UploadProjectSection from '../components/UploadProjectSection';
+import SendUpdatesSection from '../components/SendUpdatesSection';
 
 interface User {
   id: string;
@@ -24,7 +25,7 @@ function Admin() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeSection, setActiveSection] = useState<'upload' | 'users'>('upload');
+  const [activeSection, setActiveSection] = useState<'upload' | 'users' | 'emails'>('upload');
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
@@ -368,12 +369,50 @@ function Admin() {
               </svg>
               User Management
             </button>
+
+            <button
+              onClick={() => setActiveSection('emails')}
+              style={{
+                backgroundColor: activeSection === 'emails' ? '#1A1A1A' : 'transparent',
+                color: activeSection === 'emails' ? '#FFFFFF' : '#999999',
+                border: activeSection === 'emails' ? '1px solid #333333' : '1px solid transparent',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
+              onMouseEnter={(e) => {
+                if (activeSection !== 'emails') {
+                  e.currentTarget.style.backgroundColor = '#0A0A0A';
+                  e.currentTarget.style.color = '#FFFFFF';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeSection !== 'emails') {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#999999';
+                }
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 5h12M3 5l6 4 6-4M3 5v8a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5"/>
+              </svg>
+              Send Updates
+            </button>
           </div>
         </div>
 
         {/* Main Content */}
         <div style={{ flex: 1 }}>
           {activeSection === 'upload' && <UploadProjectSection />}
+
+          {activeSection === 'emails' && <SendUpdatesSection />}
 
           {activeSection === 'users' && (
             <div style={{ padding: '20px' }}>
