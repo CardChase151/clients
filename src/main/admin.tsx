@@ -177,24 +177,37 @@ function Admin() {
     }
   };
 
-  const handleMilestoneUpdate = async (userId: string, type: 'discovery' | 'proposal' | 'invoice', value: string) => {
+  const handleMilestoneUpdate = async (userId: string, type: 'discovery' | 'proposal' | 'invoice', value: string | null) => {
     try {
       const updateData: any = {};
 
       if (type === 'discovery') {
         updateData.discovery_payment_type = value;
-        updateData.discovery_complete = true;
-        updateData.discovery_complete_date = new Date().toISOString();
+        if (value) {
+          updateData.discovery_complete = true;
+          updateData.discovery_complete_date = new Date().toISOString();
+        } else {
+          updateData.discovery_complete = false;
+          updateData.discovery_complete_date = null;
+        }
       } else if (type === 'proposal') {
         updateData.proposal_status = value;
         if (value === 'reviewed') {
           updateData.proposal_reviewed = true;
           updateData.proposal_reviewed_date = new Date().toISOString();
+        } else if (!value) {
+          updateData.proposal_reviewed = false;
+          updateData.proposal_reviewed_date = null;
         }
       } else if (type === 'invoice') {
         updateData.invoice_payment_type = value;
-        updateData.invoice_fulfilled = true;
-        updateData.invoice_fulfilled_date = new Date().toISOString();
+        if (value) {
+          updateData.invoice_fulfilled = true;
+          updateData.invoice_fulfilled_date = new Date().toISOString();
+        } else {
+          updateData.invoice_fulfilled = false;
+          updateData.invoice_fulfilled_date = null;
+        }
       }
 
       const { error } = await supabase
@@ -1045,6 +1058,27 @@ function Admin() {
                   </button>
                 </>
               )}
+
+              {/* Clear Selection Button */}
+              <button
+                onClick={() => handleMilestoneUpdate(milestoneModal.userId, milestoneModal.type, null)}
+                style={{
+                  backgroundColor: '#F87171',
+                  color: '#000000',
+                  border: 'none',
+                  padding: '14px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  marginTop: '12px',
+                  transition: 'opacity 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+              >
+                Clear Selection
+              </button>
 
               <button
                 onClick={() => setMilestoneModal(null)}
