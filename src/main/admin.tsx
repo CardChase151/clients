@@ -464,7 +464,7 @@ function Admin() {
 
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         {/* Milestone Icons */}
-                        {u.approved && !u.is_admin && (
+                        {!u.is_admin && (
                           <div style={{ display: 'flex', gap: '6px', marginRight: '8px' }}>
                             {/* Discovery Icon */}
                             <button
