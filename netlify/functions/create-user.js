@@ -32,6 +32,20 @@ exports.handler = async (event) => {
       }
     );
 
+    // Check if user already exists
+    const { data: existingUser } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (existingUser) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'A user with this email already exists' })
+      };
+    }
+
     // Create the user in Supabase Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -64,6 +78,15 @@ exports.handler = async (event) => {
       console.error('Error creating user record:', dbError);
       // Try to delete the auth user if database insert fails
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+
+      // Provide more helpful error message
+      if (dbError.code === '23505') {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'User already exists in database. Please try deleting the existing user first.' })
+        };
+      }
+
       return {
         statusCode: 400,
         body: JSON.stringify({ error: dbError.message })
