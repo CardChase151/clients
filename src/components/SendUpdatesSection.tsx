@@ -140,12 +140,12 @@ function SendUpdatesSection() {
     const taskIds = await getTaskIdsForScreens(screenIds);
     console.log('📋 [EMAIL] Found', taskIds.length, 'total tasks');
 
-    // Get completed tasks (status changed to completed)
+    // Get completed tasks (status changed to done)
     const { data: completedTasksData } = await supabase
       .from('task_history')
       .select('task_id, title, edited_at, status')
       .in('task_id', taskIds)
-      .eq('status', 'completed')
+      .eq('status', 'done')
       .gt('edited_at', sinceDate)
       .order('edited_at', { ascending: false });
 
