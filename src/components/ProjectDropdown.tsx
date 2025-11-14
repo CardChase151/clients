@@ -49,7 +49,7 @@ function ProjectDropdown({ selectedProjectId, onProjectSelect, onAddProject, ref
         *,
         creator:users!created_by(email)
       `)
-      .eq('user_id', selectedUserId)
+      .eq('created_by', selectedUserId)
       .order('created_at', { ascending: false });
 
     if (error) {
