@@ -605,7 +605,7 @@ function Search() {
                     {/* Task Status */}
                     {result.type === 'task' && result.metadata.taskStatus && (
                       <>
-                        {result.type !== 'project' && <span>•</span>}
+                        <span>•</span>
                         <div style={{
                           display: 'inline-flex',
                           alignItems: 'center',
