@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../config/supabase';
 
 interface BottomBarProps {
   activeTab: string;
@@ -52,51 +51,19 @@ const AdminIcon = () => (
 );
 
 function BottomBar({ activeTab }: BottomBarProps) {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    const fetchAdminStatus = async () => {
-      if (!user) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('users')
-          .select('is_admin')
-          .eq('id', user.id)
-          .single();
-
-        if (!error && data) {
-          setIsAdmin(data.is_admin || false);
-        }
-      } catch (err) {
-        console.error('Error fetching admin status:', err);
-      }
-    };
-
-    fetchAdminStatus();
-  }, [user]);
+  const { isAdmin } = useAuth();
 
   const baseTabs = [
-    { id: 'home', label: 'Home', icon: <HomeIcon /> },
-    { id: 'search', label: 'Search', icon: <SearchIcon /> },
-    { id: 'saved', label: 'Saved', icon: <HeartIcon /> },
-    { id: 'calendar', label: 'Calendar', icon: <CalendarIcon /> },
-    { id: 'profile', label: 'Profile', icon: <ProfileIcon /> }
+    { id: 'home', path: '/', label: 'Home', icon: <HomeIcon /> },
+    { id: 'search', path: '/search', label: 'Search', icon: <SearchIcon /> },
+    { id: 'saved', path: '/saved', label: 'Saved', icon: <HeartIcon /> },
+    { id: 'calendar', path: '/calendar', label: 'Calendar', icon: <CalendarIcon /> },
+    { id: 'profile', path: '/profile', label: 'Profile', icon: <ProfileIcon /> }
   ];
 
   const tabs = isAdmin
-    ? [...baseTabs, { id: 'admin', label: 'Admin', icon: <AdminIcon /> }]
+    ? [...baseTabs, { id: 'admin', path: '/admin', label: 'Admin', icon: <AdminIcon /> }]
     : baseTabs;
-
-  const handleTabChange = (tabId: string) => {
-    if (tabId === 'home') {
-      navigate('/');
-    } else {
-      navigate(`/${tabId}`);
-    }
-  };
 
   const containerStyle: React.CSSProperties = {
     position: 'fixed',
@@ -114,7 +81,7 @@ function BottomBar({ activeTab }: BottomBarProps) {
     padding: '0 20px'
   };
 
-  const buttonStyle = (isActive: boolean): React.CSSProperties => ({
+  const linkStyle = (isActive: boolean): React.CSSProperties => ({
     flex: '0 0 auto',
     display: 'flex',
     alignItems: 'center',
@@ -128,16 +95,17 @@ function BottomBar({ activeTab }: BottomBarProps) {
     width: '56px',
     height: '56px',
     borderRadius: '50%',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)'
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)',
+    textDecoration: 'none'
   });
 
   return (
     <div style={containerStyle}>
       {tabs.map(tab => (
-        <button
+        <NavLink
           key={tab.id}
-          style={buttonStyle(activeTab === tab.id)}
-          onClick={() => handleTabChange(tab.id)}
+          to={tab.path}
+          style={linkStyle(activeTab === tab.id)}
           onMouseEnter={(e) => {
             if (activeTab !== tab.id) {
               e.currentTarget.style.color = '#999999';
@@ -154,7 +122,7 @@ function BottomBar({ activeTab }: BottomBarProps) {
           }}
         >
           {tab.icon}
-        </button>
+        </NavLink>
       ))}
     </div>
   );
