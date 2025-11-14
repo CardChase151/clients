@@ -26,6 +26,7 @@ interface Screen {
   description: string | null;
   created_at: string;
   created_by: string;
+  priority?: 'red' | 'yellow' | null;
   sort_order: number;
   creator?: {
     first_name: string | null;
@@ -385,6 +386,15 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
 
     if (!error && data) {
       setScreens(data);
+
+      // Load priorities from database into local state
+      const loadedPriorities: Record<string, 'red' | 'yellow'> = {};
+      data.forEach(screen => {
+        if (screen.priority === 'red' || screen.priority === 'yellow') {
+          loadedPriorities[screen.id] = screen.priority;
+        }
+      });
+      setPriorities(loadedPriorities);
     }
     setLoading(false);
   };
@@ -456,14 +466,28 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
     setClickOrder([]);
   };
 
-  const handlePriorityClick = (screenId: string) => {
+  const handlePriorityClick = async (screenId: string) => {
     if (priorityMode === 'none') return;
 
-    setPriorities(prev => {
-      const current = prev[screenId];
+    const current = priorities[screenId];
+    let newPriority: 'red' | 'yellow' | null = null;
 
-      // If clicking the same color, remove it
-      if (current === priorityMode) {
+    // If clicking the same color, remove it
+    if (current === priorityMode) {
+      newPriority = null;
+    } else {
+      newPriority = priorityMode;
+    }
+
+    // Update database
+    await supabase
+      .from('screens')
+      .update({ priority: newPriority })
+      .eq('id', screenId);
+
+    // Update local state
+    setPriorities(prev => {
+      if (newPriority === null) {
         const { [screenId]: _, ...rest } = prev;
         return rest;
       }
