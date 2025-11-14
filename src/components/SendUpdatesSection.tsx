@@ -120,27 +120,40 @@ function SendUpdatesSection() {
   };
 
   const fetchChangesSinceDate = async (sinceDate: string) => {
+    console.log('🔍 [EMAIL] Checking for changes since:', sinceDate);
+    console.log('🔍 [EMAIL] Project ID:', selectedProjectId);
+
     // Get all screens for this project
     const { data: screens } = await supabase
       .from('screens')
       .select('id, title, created_at')
       .eq('project_id', selectedProjectId);
 
-    if (!screens) return;
+    if (!screens) {
+      console.log('⚠️ [EMAIL] No screens found for this project');
+      return;
+    }
 
     const screenIds = screens.map(s => s.id);
+    console.log('📋 [EMAIL] Found', screens.length, 'screens:', screenIds);
+
+    const taskIds = await getTaskIdsForScreens(screenIds);
+    console.log('📋 [EMAIL] Found', taskIds.length, 'total tasks');
 
     // Get completed tasks (status changed to completed)
     const { data: completedTasksData } = await supabase
       .from('task_history')
       .select('task_id, title, edited_at, status')
-      .in('task_id', await getTaskIdsForScreens(screenIds))
+      .in('task_id', taskIds)
       .eq('status', 'completed')
       .gt('edited_at', sinceDate)
       .order('edited_at', { ascending: false });
 
+    console.log('✅ [EMAIL] Completed tasks found:', completedTasksData?.length || 0, completedTasksData);
+
     // Get new screens (created after last email)
     const newScreens = screens.filter(s => new Date(s.created_at) > new Date(sinceDate));
+    console.log('🆕 [EMAIL] New screens found:', newScreens.length, newScreens);
 
     // Get updated screens
     const { data: updatedScreensData } = await supabase
@@ -150,6 +163,8 @@ function SendUpdatesSection() {
       .gt('edited_at', sinceDate)
       .order('edited_at', { ascending: false });
 
+    console.log('📝 [EMAIL] Updated screens found:', updatedScreensData?.length || 0, updatedScreensData);
+
     // Get new tasks (created after last email)
     const { data: newTasksData } = await supabase
       .from('tasks')
@@ -158,12 +173,23 @@ function SendUpdatesSection() {
       .gt('created_at', sinceDate)
       .order('created_at', { ascending: false });
 
-    setChanges({
+    console.log('🆕 [EMAIL] New tasks found:', newTasksData?.length || 0, newTasksData);
+
+    const changes = {
       completedTasks: completedTasksData || [],
       newScreens: newScreens.map(s => ({ title: s.title, created_at: s.created_at })),
       updatedScreens: updatedScreensData || [],
       newTasks: newTasksData || []
+    };
+
+    console.log('📊 [EMAIL] Total changes summary:', {
+      completedTasks: changes.completedTasks.length,
+      newScreens: changes.newScreens.length,
+      updatedScreens: changes.updatedScreens.length,
+      newTasks: changes.newTasks.length
     });
+
+    setChanges(changes);
   };
 
   const getTaskIdsForScreens = async (screenIds: string[]) => {
