@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useProject } from '../context/ProjectContext';
 import { supabase } from '../config/supabase';
 import BottomBar from '../menu/bottombar';
+import UserDropdown from '../components/UserDropdown';
+import ProjectDropdown from '../components/ProjectDropdown';
 
 interface Project {
   id: string;
@@ -64,39 +67,19 @@ type SearchResult = {
 function Search() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { selectedUserId, selectedProjectId, setSelectedProjectId, isAdmin } = useProject();
   const [searchQuery, setSearchQuery] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
   const [screens, setScreens] = useState<Screen[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user) return;
-
-      const { data } = await supabase
-        .from('users')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single();
-
-      const adminStatus = data?.is_admin || false;
-
-      // Set selected user to current user if not admin
-      if (!adminStatus) {
-        setSelectedUserId(user.id);
-      } else {
-        setSelectedUserId(user.id); // Default to self for admin too
-      }
-    };
-
-    fetchUserData();
-  }, [user]);
 
   useEffect(() => {
     const fetchAllData = async () => {
-      if (!selectedUserId) return;
+      if (!selectedUserId) {
+        setLoading(false);
+        return;
+      }
 
       setLoading(true);
 
@@ -355,6 +338,32 @@ function Search() {
           Back to Home
         </button>
       </header>
+
+      {/* User & Project Selector */}
+      <div style={{
+        padding: '20px',
+        borderBottom: '1px solid #333333',
+        backgroundColor: '#0A0A0A',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: '16px',
+        flexWrap: 'wrap'
+      }}>
+        {isAdmin && (
+          <UserDropdown
+            selectedUserId={selectedUserId}
+            onUserSelect={(userId) => {
+              // User selection is handled by context
+            }}
+          />
+        )}
+        <ProjectDropdown
+          selectedProjectId={selectedProjectId}
+          onProjectSelect={setSelectedProjectId}
+          onAddProject={() => {}}
+        />
+      </div>
 
       {/* Search Input */}
       <div style={{

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../config/supabase';
+import { useProject } from '../context/ProjectContext';
 
 interface Project {
   id: string;
@@ -18,29 +19,29 @@ interface ProjectDropdownProps {
   onProjectSelect: (projectId: string | null) => void;
   onAddProject: () => void;
   refreshTrigger?: number;
-  userId?: string | null;
 }
 
-function ProjectDropdown({ selectedProjectId, onProjectSelect, onAddProject, refreshTrigger, userId }: ProjectDropdownProps) {
+function ProjectDropdown({ selectedProjectId, onProjectSelect, onAddProject, refreshTrigger }: ProjectDropdownProps) {
+  const { selectedUserId } = useProject();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    if (userId) {
+    if (selectedUserId) {
       fetchProjects();
     } else {
       setProjects([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshTrigger, userId]);
+  }, [refreshTrigger, selectedUserId]);
 
   const fetchProjects = async () => {
-    if (!userId) {
+    if (!selectedUserId) {
       console.log('ProjectDropdown: No userId provided');
       return;
     }
 
-    console.log('ProjectDropdown: Fetching projects for userId:', userId);
+    console.log('ProjectDropdown: Fetching projects for userId:', selectedUserId);
 
     const { data, error } = await supabase
       .from('projects')
@@ -48,7 +49,7 @@ function ProjectDropdown({ selectedProjectId, onProjectSelect, onAddProject, ref
         *,
         creator:users!created_by(email)
       `)
-      .eq('created_by', userId)
+      .eq('created_by', selectedUserId)
       .order('created_at', { ascending: false });
 
     if (error) {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useProject } from '../context/ProjectContext';
 import { supabase } from '../config/supabase';
 import BottomBar from '../menu/bottombar';
 import ProjectDropdown from '../components/ProjectDropdown';
@@ -23,12 +24,10 @@ interface OnboardingMilestones {
 function Home() {
   const location = useLocation();
   const { signOut, user, isAdmin: contextIsAdmin } = useAuth();
+  const { selectedUserId, selectedProjectId, setSelectedUserId, setSelectedProjectId, isAdmin } = useProject();
   const [approved, setApproved] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [profileComplete, setProfileComplete] = useState<boolean | null>(null);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedScreenId, setSelectedScreenId] = useState<string | null>(null);
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   const [showAddScreenModal, setShowAddScreenModal] = useState(false);
@@ -59,12 +58,10 @@ function Home() {
         if (error) {
           console.error('Home: Error fetching approval status:', error);
           setApproved(false);
-          setIsAdmin(false);
           setProfileComplete(false);
         } else {
           console.log('Home: User data:', data);
           setApproved(data?.approved || false);
-          setIsAdmin(data?.is_admin || false);
           setProfileComplete(data?.profile_complete || false);
 
           // Set milestones
@@ -76,19 +73,10 @@ function Home() {
             invoice_fulfilled: data?.invoice_fulfilled || false,
             invoice_fulfilled_date: data?.invoice_fulfilled_date || null
           });
-
-          // If not admin, set selectedUserId to current user
-          if (!data?.is_admin) {
-            console.log('Home: Not admin, setting selectedUserId to:', user.id);
-            setSelectedUserId(user.id);
-          } else {
-            console.log('Home: Is admin, selectedUserId will be set by user selection');
-          }
         }
       } catch (err) {
         console.error('Home: Error:', err);
         setApproved(false);
-        setIsAdmin(false);
         setProfileComplete(false);
       } finally {
         setLoading(false);
@@ -566,7 +554,6 @@ function Home() {
           onProjectSelect={setSelectedProjectId}
           onAddProject={() => setShowAddProjectModal(true)}
           refreshTrigger={projectRefreshTrigger}
-          userId={selectedUserId}
         />
       </div>
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ProjectProvider } from './context/ProjectContext';
 
 // Onboarding screens
 import Welcome from './onboarding/welcome';
@@ -84,9 +85,11 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <ProjectProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </ProjectProvider>
     </AuthProvider>
   );
 }
