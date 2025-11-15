@@ -221,7 +221,7 @@ function SendUpdatesSection() {
         },
         body: JSON.stringify({
           to: userEmail,
-          subject: `Project Update - ${projectName}`,
+          subject: 'Project Update',
           personalMessage: personalMessage,
           changes: changes,
           projectName: projectName
@@ -243,13 +243,11 @@ function SendUpdatesSection() {
           sent_by: (await supabase.auth.getUser()).data.user?.id,
           personal_message: personalMessage,
           changes_snapshot: changes,
-          email_subject: `Project Update - ${projectName}`,
+          email_subject: 'Project Update',
           email_sent_successfully: true
         });
 
       if (error) throw error;
-
-      alert('Email sent successfully!');
 
       // Reset form
       setPersonalMessage('');

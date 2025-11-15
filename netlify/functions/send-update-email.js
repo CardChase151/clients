@@ -81,7 +81,8 @@ function formatEmailHTML(personalMessage, changes, projectName) {
 <body>
   <div class="container">
     <div class="header">
-      <h2>Project Update - ${projectName || 'Your Project'}</h2>
+      <h2>Project Update</h2>
+      ${projectName ? `<p style="color: #666; font-size: 14px; margin-top: -10px;">Regarding: ${projectName}</p>` : ''}
     </div>
 
     <div class="message">${personalMessage}</div>
@@ -142,7 +143,7 @@ function formatEmailHTML(personalMessage, changes, projectName) {
     <div class="footer">
       Best regards,<br>
       AppCatalyst Team<br><br>
-      Questions? Reply to this email or contact us at support@appcatalyst.com
+      Questions? Reach me at my direct inbox: TheK2way17@gmail.com
     </div>
   </div>
 </body>
