@@ -218,15 +218,6 @@ function SendUpdatesSection() {
     setChanges(changes);
   };
 
-  const getTaskIdsForScreens = async (screenIds: string[]) => {
-    const { data } = await supabase
-      .from('tasks')
-      .select('id')
-      .in('screen_id', screenIds);
-
-    return data?.map(t => t.id) || [];
-  };
-
   const handleSendEmail = async () => {
     if (!selectedUserId || !selectedProjectId || !personalMessage.trim()) {
       alert('Please fill in all required fields');
