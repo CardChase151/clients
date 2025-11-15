@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../config/supabase';
+import { useAuth } from '../context/AuthContext';
 
 interface CompleteProfileModalProps {
   userId: string;
@@ -8,6 +9,7 @@ interface CompleteProfileModalProps {
 }
 
 function CompleteProfileModal({ userId, userEmail, onComplete }: CompleteProfileModalProps) {
+  const { signOut } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -15,6 +17,11 @@ function CompleteProfileModal({ userId, userEmail, onComplete }: CompleteProfile
   const [appName, setAppName] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const handleLogout = async () => {
+    await signOut();
+    window.location.href = '/';
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,25 +85,54 @@ function CompleteProfileModal({ userId, userEmail, onComplete }: CompleteProfile
         overflowY: 'auto'
       }}>
         <div style={{
-          textAlign: 'center',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
           marginBottom: '32px'
         }}>
-          <h2 style={{
-            fontSize: '24px',
-            fontWeight: '600',
-            color: '#FFFFFF',
-            margin: '0 0 8px 0',
-            letterSpacing: '-0.02em'
-          }}>
-            Complete Your Profile
-          </h2>
-          <p style={{
-            fontSize: '14px',
-            color: '#999999',
-            margin: 0
-          }}>
-            We need a few details to get started
-          </p>
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '600',
+              color: '#FFFFFF',
+              margin: '0 0 8px 0',
+              letterSpacing: '-0.02em'
+            }}>
+              Complete Your Profile
+            </h2>
+            <p style={{
+              fontSize: '14px',
+              color: '#999999',
+              margin: 0
+            }}>
+              We need a few details to get started
+            </p>
+          </div>
+          <button
+            onClick={handleLogout}
+            style={{
+              backgroundColor: 'transparent',
+              color: '#666666',
+              border: '1px solid #333333',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontSize: '13px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              marginLeft: '16px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#1A1A1A';
+              e.currentTarget.style.color = '#FFFFFF';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = '#666666';
+            }}
+          >
+            Logout
+          </button>
         </div>
 
         <form onSubmit={handleSubmit}>
