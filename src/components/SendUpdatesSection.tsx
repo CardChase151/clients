@@ -210,7 +210,31 @@ function SendUpdatesSection() {
     setSending(true);
 
     try {
-      // Save to email_history
+      const projectName = projects.find(p => p.id === selectedProjectId)?.name;
+      const userEmail = users.find(u => u.id === selectedUserId)?.email;
+
+      // Send email via Netlify Function
+      const response = await fetch('/.netlify/functions/send-update-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: userEmail,
+          subject: `Project Update - ${projectName}`,
+          personalMessage: personalMessage,
+          changes: changes,
+          projectName: projectName
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send email');
+      }
+
+      // Save to email_history after successful send
       const { error } = await supabase
         .from('email_history')
         .insert({
@@ -219,20 +243,13 @@ function SendUpdatesSection() {
           sent_by: (await supabase.auth.getUser()).data.user?.id,
           personal_message: personalMessage,
           changes_snapshot: changes,
-          email_subject: `Project Update - ${projects.find(p => p.id === selectedProjectId)?.name}`,
-          email_sent_successfully: true // Will be false until OneSignal is integrated
+          email_subject: `Project Update - ${projectName}`,
+          email_sent_successfully: true
         });
 
       if (error) throw error;
 
-      // TODO: OneSignal Integration
-      // await sendEmailViaOneSignal({
-      //   to: users.find(u => u.id === selectedUserId)?.email,
-      //   subject: `Project Update - ${projects.find(p => p.id === selectedProjectId)?.name}`,
-      //   body: formatEmailBody()
-      // });
-
-      alert('Email sent successfully! (OneSignal integration pending)');
+      alert('Email sent successfully!');
 
       // Reset form
       setPersonalMessage('');
