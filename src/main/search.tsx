@@ -355,7 +355,7 @@ function Search() {
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
       {/* Header */}
-      <header style={{
+      <header className="search-header" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -366,7 +366,7 @@ function Search() {
         backgroundColor: '#000000',
         zIndex: 100
       }}>
-        <div style={{
+        <div className="search-header-title" style={{
           fontSize: '20px',
           fontWeight: '600',
           letterSpacing: '-0.02em'
@@ -376,6 +376,7 @@ function Search() {
 
         <button
           onClick={() => navigate('/')}
+          className="search-back-btn"
           style={{
             backgroundColor: 'transparent',
             color: '#666666',
@@ -401,7 +402,7 @@ function Search() {
       </header>
 
       {/* User & Project Selector */}
-      <div style={{
+      <div className="selector-container" style={{
         padding: '20px',
         borderBottom: '1px solid #333333',
         backgroundColor: '#0A0A0A',
@@ -433,12 +434,12 @@ function Search() {
       </div>
 
       {/* Search Input */}
-      <div style={{
+      <div className="search-container" style={{
         padding: '20px',
         maxWidth: '800px',
         margin: '0 auto'
       }}>
-        <div style={{
+        <div className="search-input-wrapper" style={{
           position: 'relative',
           marginBottom: '30px'
         }}>
@@ -448,6 +449,7 @@ function Search() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search projects, screens, tasks..."
             autoFocus
+            className="search-input"
             style={{
               width: '100%',
               backgroundColor: '#1A1A1A',
@@ -495,15 +497,15 @@ function Search() {
 
         {/* Empty State - No Query */}
         {!loading && !searchQuery.trim() && (
-          <div style={{
+          <div className="search-empty-state" style={{
             textAlign: 'center',
             padding: '60px 20px'
           }}>
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#333333" strokeWidth="1.5" style={{ margin: '0 auto 20px' }}>
+            <svg className="search-empty-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#333333" strokeWidth="1.5" style={{ margin: '0 auto 20px' }}>
               <circle cx="11" cy="11" r="8"/>
               <path d="M21 21l-4.35-4.35"/>
             </svg>
-            <h3 style={{
+            <h3 className="search-empty-title" style={{
               fontSize: '18px',
               fontWeight: '600',
               color: '#FFFFFF',
@@ -511,7 +513,7 @@ function Search() {
             }}>
               Search your projects
             </h3>
-            <p style={{
+            <p className="search-empty-description" style={{
               fontSize: '14px',
               color: '#666666',
               lineHeight: '1.6',
@@ -524,16 +526,16 @@ function Search() {
 
         {/* Empty State - No Results */}
         {!loading && searchQuery.trim() && searchResults.length === 0 && (
-          <div style={{
+          <div className="search-empty-state" style={{
             textAlign: 'center',
             padding: '60px 20px'
           }}>
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#333333" strokeWidth="1.5" style={{ margin: '0 auto 20px' }}>
+            <svg className="search-empty-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#333333" strokeWidth="1.5" style={{ margin: '0 auto 20px' }}>
               <circle cx="11" cy="11" r="8"/>
               <path d="M21 21l-4.35-4.35"/>
               <line x1="8" y1="11" x2="14" y2="11" stroke="#666666"/>
             </svg>
-            <h3 style={{
+            <h3 className="search-empty-title" style={{
               fontSize: '18px',
               fontWeight: '600',
               color: '#FFFFFF',
@@ -541,7 +543,7 @@ function Search() {
             }}>
               No results found
             </h3>
-            <p style={{
+            <p className="search-empty-description" style={{
               fontSize: '14px',
               color: '#666666',
               lineHeight: '1.6',
@@ -564,7 +566,7 @@ function Search() {
               {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} found
             </div>
 
-            <div style={{
+            <div className="search-results-container" style={{
               display: 'flex',
               flexDirection: 'column',
               gap: '12px'
@@ -573,6 +575,7 @@ function Search() {
                 <div
                   key={`${result.type}-${result.id}`}
                   onClick={() => handleResultClick(result)}
+                  className="search-result-card"
                   style={{
                     backgroundColor: '#1A1A1A',
                     border: '1px solid #333333',
@@ -655,7 +658,7 @@ function Search() {
                   )}
 
                   {/* Metadata */}
-                  <div style={{
+                  <div className="search-result-metadata" style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '12px',
