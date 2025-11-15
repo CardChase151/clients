@@ -137,7 +137,13 @@ function SendUpdatesSection() {
     const screenIds = screens.map(s => s.id);
     console.log('📋 [EMAIL] Found', screens.length, 'screens:', screenIds);
 
-    const taskIds = await getTaskIdsForScreens(screenIds);
+    // Get all tasks with their screen info
+    const { data: allTasks } = await supabase
+      .from('tasks')
+      .select('id, title, screen_id')
+      .in('screen_id', screenIds);
+
+    const taskIds = allTasks?.map(t => t.id) || [];
     console.log('📋 [EMAIL] Found', taskIds.length, 'total tasks');
 
     // Get completed tasks (status changed to done)
@@ -149,7 +155,18 @@ function SendUpdatesSection() {
       .gt('edited_at', sinceDate)
       .order('edited_at', { ascending: false });
 
-    console.log('✅ [EMAIL] Completed tasks found:', completedTasksData?.length || 0, completedTasksData);
+    // Map completed tasks to their screens
+    const completedTasksWithScreens = completedTasksData?.map(task => {
+      const taskInfo = allTasks?.find(t => t.id === task.task_id);
+      const screen = screens.find(s => s.id === taskInfo?.screen_id);
+      return {
+        ...task,
+        screen_id: taskInfo?.screen_id,
+        screen_title: screen?.title || 'Unknown Screen'
+      };
+    }) || [];
+
+    console.log('✅ [EMAIL] Completed tasks found:', completedTasksWithScreens.length, completedTasksWithScreens);
 
     // Get new screens (created after last email)
     const newScreens = screens.filter(s => new Date(s.created_at) > new Date(sinceDate));
@@ -173,13 +190,22 @@ function SendUpdatesSection() {
       .gt('created_at', sinceDate)
       .order('created_at', { ascending: false });
 
-    console.log('🆕 [EMAIL] New tasks found:', newTasksData?.length || 0, newTasksData);
+    // Map new tasks to their screens
+    const newTasksWithScreens = newTasksData?.map(task => {
+      const screen = screens.find(s => s.id === task.screen_id);
+      return {
+        ...task,
+        screen_title: screen?.title || 'Unknown Screen'
+      };
+    }) || [];
+
+    console.log('🆕 [EMAIL] New tasks found:', newTasksWithScreens.length, newTasksWithScreens);
 
     const changes = {
-      completedTasks: completedTasksData || [],
+      completedTasks: completedTasksWithScreens,
       newScreens: newScreens.map(s => ({ title: s.title, created_at: s.created_at })),
       updatedScreens: updatedScreensData || [],
-      newTasks: newTasksData || []
+      newTasks: newTasksWithScreens
     };
 
     console.log('📊 [EMAIL] Total changes summary:', {

@@ -94,14 +94,30 @@ function formatEmailHTML(personalMessage, changes, projectName) {
 
     html += `<div class="changes"><h3>Recent Progress</h3>`;
 
-    // Completed tasks
+    // Group completed tasks by screen
     if (changes.completedTasks?.length > 0) {
-      html += `
-        <div class="section">
-          <div class="section-title completed">COMPLETED TASKS (${changes.completedTasks.length})</div>
-          ${changes.completedTasks.map(task => `<div class="item">✓ ${task.title}</div>`).join('')}
-        </div>
-      `;
+      const tasksByScreen = {};
+      changes.completedTasks.forEach(task => {
+        const screenTitle = task.screen_title || 'Unknown Screen';
+        if (!tasksByScreen[screenTitle]) {
+          tasksByScreen[screenTitle] = [];
+        }
+        tasksByScreen[screenTitle].push(task);
+      });
+
+      html += `<div class="section">
+        <div class="section-title completed">COMPLETED TASKS (${changes.completedTasks.length})</div>`;
+
+      Object.keys(tasksByScreen).forEach(screenTitle => {
+        html += `<div style="margin-bottom: 12px;">
+          <div style="font-weight: 600; color: #000; margin-bottom: 6px; padding-left: 8px;">${screenTitle}</div>
+          ${tasksByScreen[screenTitle].map(task =>
+            `<div class="item" style="padding-left: 24px;">✓ ${task.title}</div>`
+          ).join('')}
+        </div>`;
+      });
+
+      html += `</div>`;
     }
 
     // New screens
@@ -126,14 +142,30 @@ function formatEmailHTML(personalMessage, changes, projectName) {
       `;
     }
 
-    // New tasks
+    // Group new tasks by screen
     if (changes.newTasks?.length > 0) {
-      html += `
-        <div class="section">
-          <div class="section-title new-task">NEW TASKS (${changes.newTasks.length})</div>
-          ${changes.newTasks.map(task => `<div class="item">• ${task.title}</div>`).join('')}
-        </div>
-      `;
+      const newTasksByScreen = {};
+      changes.newTasks.forEach(task => {
+        const screenTitle = task.screen_title || 'Unknown Screen';
+        if (!newTasksByScreen[screenTitle]) {
+          newTasksByScreen[screenTitle] = [];
+        }
+        newTasksByScreen[screenTitle].push(task);
+      });
+
+      html += `<div class="section">
+        <div class="section-title new-task">NEW TASKS (${changes.newTasks.length})</div>`;
+
+      Object.keys(newTasksByScreen).forEach(screenTitle => {
+        html += `<div style="margin-bottom: 12px;">
+          <div style="font-weight: 600; color: #000; margin-bottom: 6px; padding-left: 8px;">${screenTitle}</div>
+          ${newTasksByScreen[screenTitle].map(task =>
+            `<div class="item" style="padding-left: 24px;">• ${task.title}</div>`
+          ).join('')}
+        </div>`;
+      });
+
+      html += `</div>`;
     }
 
     html += `</div>`;
