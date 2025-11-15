@@ -1,0 +1,159 @@
+/* Mobile Responsive Styles - Keeps Desktop Intact */
+/* Only applies styles for screens 767px and below */
+
+/* Base mobile styles */
+@media (max-width: 767px) {
+  /* Home Screen - Milestone Grid */
+  .milestone-grid {
+    grid-template-columns: 1fr !important;
+    max-width: 100% !important;
+  }
+
+  .milestone-card {
+    width: 100% !important;
+  }
+
+  /* Home Screen - Header adjustments */
+  .home-header {
+    padding: 16px !important;
+    flex-direction: row !important;
+  }
+
+  .home-header-title {
+    font-size: 18px !important;
+  }
+
+  .home-logout-btn {
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+  }
+
+  /* User & Project Selector */
+  .selector-container {
+    padding: 16px !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  /* ScreensList - Grid */
+  .screens-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* ScreensList - Controls Bar */
+  .controls-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .controls-left,
+  .controls-right {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* ScreensList - Priority/Reorder Buttons */
+  .priority-buttons,
+  .reorder-buttons {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 8px !important;
+  }
+
+  .priority-btn,
+  .reorder-btn {
+    flex: 1 1 auto !important;
+    min-width: 120px !important;
+    max-width: 160px !important;
+  }
+
+  /* Screen Cards */
+  .screen-card {
+    min-height: 160px !important;
+  }
+
+  /* Bottom Bar - Mobile Safe Areas */
+  .bottom-bar {
+    bottom: 0 !important;
+    padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+    padding-left: max(20px, env(safe-area-inset-left)) !important;
+    padding-right: max(20px, env(safe-area-inset-right)) !important;
+  }
+
+  /* Add bottom padding to content to account for bottom nav */
+  .main-content-with-nav {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Waiting for Approval Screen */
+  .waiting-content {
+    padding: 16px !important;
+    max-width: 100% !important;
+  }
+
+  .waiting-title {
+    font-size: 24px !important;
+  }
+
+  .waiting-description {
+    font-size: 15px !important;
+  }
+
+  /* Modal adjustments for mobile */
+  .modal-overlay {
+    padding: 16px !important;
+  }
+
+  .modal-content {
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  /* Dropdown adjustments */
+  .dropdown-button {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Empty state */
+  .empty-state {
+    padding: 40px 20px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* Extra small mobile devices (iPhone SE, etc.) */
+@media (max-width: 374px) {
+  .home-header-title {
+    font-size: 16px !important;
+  }
+
+  .milestone-card {
+    padding: 16px !important;
+  }
+
+  .waiting-title {
+    font-size: 20px !important;
+  }
+
+  .priority-btn,
+  .reorder-btn {
+    font-size: 13px !important;
+    padding: 8px 12px !important;
+  }
+}
+
+/* Landscape mobile */
+@media (max-width: 767px) and (orientation: landscape) {
+  .milestone-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .bottom-bar {
+    bottom: 10px !important;
+  }
+}
