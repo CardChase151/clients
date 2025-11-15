@@ -32,7 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_task_history_status_edited_at
 ON task_history(task_id, status, edited_at DESC);
 
 -- Verify the constraint was added successfully
-SELECT conname, consrc
+SELECT conname, pg_get_constraintdef(oid) as constraint_definition
 FROM pg_constraint
 WHERE conrelid = 'tasks'::regclass
 AND conname = 'tasks_status_check';
