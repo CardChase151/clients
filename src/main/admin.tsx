@@ -43,7 +43,6 @@ function Admin() {
   const [updatingMilestone, setUpdatingMilestone] = useState(false);
   const [selectedMilestoneValue, setSelectedMilestoneValue] = useState<string | null>(null);
   const [milestoneUrl, setMilestoneUrl] = useState('');
-  const [proposalPdf, setProposalPdf] = useState<File | null>(null);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -346,7 +345,6 @@ function Admin() {
       setSendMilestoneEmail(false);
       setSelectedMilestoneValue(null);
       setMilestoneUrl('');
-      setProposalPdf(null);
 
     } catch (err: any) {
       console.error('Error updating milestone:', err);
@@ -391,7 +389,6 @@ function Admin() {
       setSendMilestoneEmail(false);
       setSelectedMilestoneValue(null);
       setMilestoneUrl('');
-      setProposalPdf(null);
 
     } catch (err: any) {
       console.error('Error clearing milestone:', err);
@@ -1490,38 +1487,6 @@ function Admin() {
                 </div>
               )}
 
-              {/* Optional PDF upload for Proposal Sent */}
-              {milestoneModal.type === 'proposal' && selectedMilestoneValue === 'sent' && (
-                <div style={{ marginTop: '12px' }}>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                    color: '#999999',
-                    marginBottom: '6px'
-                  }}>
-                    Proposal PDF (Optional)
-                  </label>
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    onChange={(e) => setProposalPdf(e.target.files?.[0] || null)}
-                    style={{
-                      width: '100%',
-                      backgroundColor: '#0A0A0A',
-                      border: '1px solid #333333',
-                      borderRadius: '8px',
-                      padding: '10px 12px',
-                      fontSize: '14px',
-                      color: '#FFFFFF',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                      cursor: 'pointer'
-                    }}
-                  />
-                </div>
-              )}
-
               {/* Email Notification Checkbox */}
               <div style={{
                 display: 'flex',
@@ -1563,7 +1528,6 @@ function Admin() {
                     setSelectedMilestoneValue(null);
                     setSendMilestoneEmail(false);
                     setMilestoneUrl('');
-                    setProposalPdf(null);
                   }}
                   disabled={updatingMilestone}
                   style={{
