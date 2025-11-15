@@ -131,7 +131,10 @@ function Admin() {
 
       const data = await response.json();
 
+      console.log('Create user response:', { status: response.status, data });
+
       if (!response.ok) {
+        console.error('Create user error:', data.error);
         throw new Error(data.error || 'Failed to create user');
       }
 
