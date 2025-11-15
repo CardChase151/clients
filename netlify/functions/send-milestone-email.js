@@ -25,15 +25,26 @@ exports.handler = async (event) => {
     // Build email body
     const greeting = firstName ? `Hi ${firstName},` : 'Hello,';
 
-    const emailBody = `
-${greeting}
+    const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <p>${greeting}</p>
 
-${message}
+  <p style="white-space: pre-line;">${message}</p>
 
-If you have any questions, feel free to reach out anytime.
+  <p style="margin-top: 24px;">If you have any questions, feel free to reach out anytime.</p>
 
-Best regards,
-AppCatalyst Team
+  <p style="margin-top: 24px;">
+    Best regards,<br>
+    <strong>AppCatalyst Team</strong>
+  </p>
+</body>
+</html>
     `.trim();
 
     // Prepare email options
@@ -41,7 +52,7 @@ AppCatalyst Team
       from: 'AppCatalyst <noreply@appcatalyst.org>',
       to: [to],
       subject: subject,
-      text: emailBody,
+      html: htmlBody,
     };
 
     // Add PDF attachment if present
