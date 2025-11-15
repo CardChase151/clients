@@ -73,6 +73,8 @@ exports.handler = async (event) => {
     const { error: updateError } = await supabaseAdmin
       .from('users')
       .update({
+        first_name: firstName || null,
+        last_name: lastName || null,
         approved: false,  // NOT auto-approved - they wait in the onboarding process
         is_admin: false,
         discovery_complete: false,
