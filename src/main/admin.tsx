@@ -244,7 +244,7 @@ function Admin() {
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
       {/* Header */}
-      <header className="admin-header" style={{
+      <header className="admin-header mobile-safe-header" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',

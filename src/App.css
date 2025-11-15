@@ -68,3 +68,17 @@ body {
     transform: rotate(360deg);
   }
 }
+
+/* Mobile-only safe area spacing */
+@media (max-width: 768px) {
+  .mobile-safe-header {
+    padding-top: calc(20px + env(safe-area-inset-top)) !important;
+    padding-left: calc(20px + env(safe-area-inset-left)) !important;
+    padding-right: calc(20px + env(safe-area-inset-right)) !important;
+  }
+
+  .mobile-safe-tabs {
+    padding-left: calc(20px + env(safe-area-inset-left)) !important;
+    padding-right: calc(20px + env(safe-area-inset-right)) !important;
+  }
+}

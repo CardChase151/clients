@@ -491,7 +491,7 @@ function Home() {
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
       {/* Header */}
-      <header className="home-header" style={{
+      <header className="home-header mobile-safe-header" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -538,7 +538,7 @@ function Home() {
       </header>
 
       {/* User & Project Selector */}
-      <div className="selector-container" style={{
+      <div className="selector-container mobile-safe-tabs" style={{
         padding: '20px',
         borderBottom: '1px solid #333333',
         backgroundColor: '#0A0A0A',
