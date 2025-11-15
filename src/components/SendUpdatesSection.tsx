@@ -15,10 +15,13 @@ interface Project {
 }
 
 interface ChangesSummary {
-  completedTasks: Array<{ title: string; edited_at: string }>;
+  reviewTasks: Array<{ title: string; screen_title: string; task_id: string }>;
+  reviewToDone: Array<{ title: string; screen_title: string; task_id: string }>;
+  reviewToProgress: Array<{ title: string; screen_title: string; task_id: string }>;
+  completedTasks: Array<{ title: string; edited_at: string; screen_title?: string }>;
   newScreens: Array<{ title: string; created_at: string }>;
   updatedScreens: Array<{ title: string; description: string; edited_at: string }>;
-  newTasks: Array<{ title: string; created_at: string }>;
+  newTasks: Array<{ title: string; created_at: string; screen_title?: string }>;
 }
 
 function SendUpdatesSection() {
@@ -103,6 +106,9 @@ function SendUpdatesSection() {
       if (!lastSentDate) {
         // First time - show initial message
         setChanges({
+          reviewTasks: [],
+          reviewToDone: [],
+          reviewToProgress: [],
           completedTasks: [],
           newScreens: [],
           updatedScreens: [],
@@ -123,6 +129,18 @@ function SendUpdatesSection() {
     console.log('🔍 [EMAIL] Checking for changes since:', sinceDate);
     console.log('🔍 [EMAIL] Project ID:', selectedProjectId);
 
+    // Get last email's task status snapshot
+    const { data: lastEmail } = await supabase
+      .from('email_history')
+      .select('changes_snapshot')
+      .eq('project_id', selectedProjectId)
+      .order('sent_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    const lastTaskStatuses: Record<string, string> = lastEmail?.changes_snapshot?.taskStatuses || {};
+    console.log('📸 [EMAIL] Last email task statuses:', lastTaskStatuses);
+
     // Get all screens for this project
     const { data: screens } = await supabase
       .from('screens')
@@ -137,10 +155,10 @@ function SendUpdatesSection() {
     const screenIds = screens.map(s => s.id);
     console.log('📋 [EMAIL] Found', screens.length, 'screens:', screenIds);
 
-    // Get all tasks with their screen info
+    // Get all tasks with their screen info and current status
     const { data: allTasks } = await supabase
       .from('tasks')
-      .select('id, title, screen_id')
+      .select('id, title, screen_id, status')
       .in('screen_id', screenIds);
 
     const taskIds = allTasks?.map(t => t.id) || [];
@@ -201,14 +219,77 @@ function SendUpdatesSection() {
 
     console.log('🆕 [EMAIL] New tasks found:', newTasksWithScreens.length, newTasksWithScreens);
 
+    // Categorize tasks based on status transitions
+    const reviewTasks: Array<{ title: string; screen_title: string; task_id: string }> = [];
+    const reviewToDone: Array<{ title: string; screen_title: string; task_id: string }> = [];
+    const reviewToProgress: Array<{ title: string; screen_title: string; task_id: string }> = [];
+    const newlyCompletedTasks: Array<{ title: string; edited_at: string; screen_title: string }> = [];
+
+    allTasks?.forEach(task => {
+      const screen = screens.find(s => s.id === task.screen_id);
+      const screenTitle = screen?.title || 'Unknown Screen';
+      const lastStatus = lastTaskStatuses[task.id];
+      const currentStatus = task.status;
+
+      // Tasks currently in review (including those that stayed in review)
+      if (currentStatus === 'review') {
+        reviewTasks.push({
+          title: task.title,
+          screen_title: screenTitle,
+          task_id: task.id
+        });
+      }
+
+      // Tasks that moved from review to done
+      if (lastStatus === 'review' && currentStatus === 'done') {
+        reviewToDone.push({
+          title: task.title,
+          screen_title: screenTitle,
+          task_id: task.id
+        });
+      }
+
+      // Tasks that moved from review back to in_progress
+      if (lastStatus === 'review' && currentStatus === 'in_progress') {
+        reviewToProgress.push({
+          title: task.title,
+          screen_title: screenTitle,
+          task_id: task.id
+        });
+      }
+
+      // Tasks that are newly completed (not from review)
+      if (currentStatus === 'done' && lastStatus !== 'review' && lastStatus !== 'done') {
+        const historyItem = completedTasksWithScreens.find((t: any) => t.task_id === task.id);
+        if (historyItem) {
+          newlyCompletedTasks.push({
+            title: task.title,
+            edited_at: historyItem.edited_at,
+            screen_title: screenTitle
+          });
+        }
+      }
+    });
+
+    console.log('📊 [EMAIL] Review tasks:', reviewTasks.length);
+    console.log('📊 [EMAIL] Review → Done:', reviewToDone.length);
+    console.log('📊 [EMAIL] Review → In Progress:', reviewToProgress.length);
+    console.log('📊 [EMAIL] Newly completed:', newlyCompletedTasks.length);
+
     const changes = {
-      completedTasks: completedTasksWithScreens,
+      reviewTasks,
+      reviewToDone,
+      reviewToProgress,
+      completedTasks: newlyCompletedTasks,
       newScreens: newScreens.map(s => ({ title: s.title, created_at: s.created_at })),
       updatedScreens: updatedScreensData || [],
       newTasks: newTasksWithScreens
     };
 
     console.log('📊 [EMAIL] Total changes summary:', {
+      reviewTasks: changes.reviewTasks.length,
+      reviewToDone: changes.reviewToDone.length,
+      reviewToProgress: changes.reviewToProgress.length,
       completedTasks: changes.completedTasks.length,
       newScreens: changes.newScreens.length,
       updatedScreens: changes.updatedScreens.length,
@@ -251,6 +332,24 @@ function SendUpdatesSection() {
         throw new Error(result.error || 'Failed to send email');
       }
 
+      // Get current task statuses to snapshot
+      const { data: screens } = await supabase
+        .from('screens')
+        .select('id')
+        .eq('project_id', selectedProjectId);
+
+      const screenIds = screens?.map(s => s.id) || [];
+
+      const { data: allTasks } = await supabase
+        .from('tasks')
+        .select('id, status')
+        .in('screen_id', screenIds);
+
+      const taskStatuses: Record<string, string> = {};
+      allTasks?.forEach(task => {
+        taskStatuses[task.id] = task.status;
+      });
+
       // Save to email_history after successful send
       const { error } = await supabase
         .from('email_history')
@@ -259,7 +358,10 @@ function SendUpdatesSection() {
           project_id: selectedProjectId,
           sent_by: (await supabase.auth.getUser()).data.user?.id,
           personal_message: personalMessage,
-          changes_snapshot: changes,
+          changes_snapshot: {
+            ...changes,
+            taskStatuses // Store current task statuses for next email comparison
+          },
           email_subject: 'Project Update',
           email_sent_successfully: true
         });
@@ -284,6 +386,9 @@ function SendUpdatesSection() {
     if (!changes) return null;
 
     const hasChanges =
+      changes.reviewTasks.length > 0 ||
+      changes.reviewToDone.length > 0 ||
+      changes.reviewToProgress.length > 0 ||
       changes.completedTasks.length > 0 ||
       changes.newScreens.length > 0 ||
       changes.updatedScreens.length > 0 ||
@@ -337,10 +442,103 @@ function SendUpdatesSection() {
           Changes Since Last Email ({new Date(lastEmailDate).toLocaleDateString()})
         </div>
 
-        {changes.completedTasks.length > 0 && (
+        {changes.reviewTasks.length > 0 && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontSize: '13px', fontWeight: '600', color: '#F59E0B', marginBottom: '8px' }}>
+              ITEMS FOR YOUR REVIEW ({changes.reviewTasks.length})
+            </div>
+            {(() => {
+              const tasksByScreen: { [key: string]: any[] } = {};
+              changes.reviewTasks.forEach((task: any) => {
+                const screenTitle = task.screen_title || 'Unknown Screen';
+                if (!tasksByScreen[screenTitle]) {
+                  tasksByScreen[screenTitle] = [];
+                }
+                tasksByScreen[screenTitle].push(task);
+              });
+
+              return Object.keys(tasksByScreen).map((screenTitle, idx) => (
+                <div key={idx} style={{ marginBottom: '12px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#FFFFFF', marginBottom: '6px', paddingLeft: '8px' }}>
+                    {screenTitle}
+                  </div>
+                  {tasksByScreen[screenTitle].map((task: any, taskIdx: number) => (
+                    <div key={taskIdx} style={{ fontSize: '13px', color: '#CCCCCC', marginBottom: '4px', paddingLeft: '24px' }}>
+                      👁️ {task.title}
+                    </div>
+                  ))}
+                </div>
+              ));
+            })()}
+          </div>
+        )}
+
+        {changes.reviewToDone.length > 0 && (
           <div style={{ marginBottom: '16px' }}>
             <div style={{ fontSize: '13px', fontWeight: '600', color: '#4ADE80', marginBottom: '8px' }}>
-              COMPLETED TASKS ({changes.completedTasks.length})
+              APPROVED & COMPLETE ({changes.reviewToDone.length})
+            </div>
+            {(() => {
+              const tasksByScreen: { [key: string]: any[] } = {};
+              changes.reviewToDone.forEach((task: any) => {
+                const screenTitle = task.screen_title || 'Unknown Screen';
+                if (!tasksByScreen[screenTitle]) {
+                  tasksByScreen[screenTitle] = [];
+                }
+                tasksByScreen[screenTitle].push(task);
+              });
+
+              return Object.keys(tasksByScreen).map((screenTitle, idx) => (
+                <div key={idx} style={{ marginBottom: '12px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#FFFFFF', marginBottom: '6px', paddingLeft: '8px' }}>
+                    {screenTitle}
+                  </div>
+                  {tasksByScreen[screenTitle].map((task: any, taskIdx: number) => (
+                    <div key={taskIdx} style={{ fontSize: '13px', color: '#CCCCCC', marginBottom: '4px', paddingLeft: '24px' }}>
+                      ✅ {task.title}
+                    </div>
+                  ))}
+                </div>
+              ));
+            })()}
+          </div>
+        )}
+
+        {changes.reviewToProgress.length > 0 && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontSize: '13px', fontWeight: '600', color: '#3B82F6', marginBottom: '8px' }}>
+              BACK IN DEVELOPMENT ({changes.reviewToProgress.length})
+            </div>
+            {(() => {
+              const tasksByScreen: { [key: string]: any[] } = {};
+              changes.reviewToProgress.forEach((task: any) => {
+                const screenTitle = task.screen_title || 'Unknown Screen';
+                if (!tasksByScreen[screenTitle]) {
+                  tasksByScreen[screenTitle] = [];
+                }
+                tasksByScreen[screenTitle].push(task);
+              });
+
+              return Object.keys(tasksByScreen).map((screenTitle, idx) => (
+                <div key={idx} style={{ marginBottom: '12px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#FFFFFF', marginBottom: '6px', paddingLeft: '8px' }}>
+                    {screenTitle}
+                  </div>
+                  {tasksByScreen[screenTitle].map((task: any, taskIdx: number) => (
+                    <div key={taskIdx} style={{ fontSize: '13px', color: '#CCCCCC', marginBottom: '4px', paddingLeft: '24px' }}>
+                      🔄 {task.title}
+                    </div>
+                  ))}
+                </div>
+              ));
+            })()}
+          </div>
+        )}
+
+        {changes.completedTasks.length > 0 && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontSize: '13px', fontWeight: '600', color: '#22C55E', marginBottom: '8px' }}>
+              NEWLY COMPLETED TASKS ({changes.completedTasks.length})
             </div>
             {(() => {
               const tasksByScreen: { [key: string]: any[] } = {};

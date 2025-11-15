@@ -27,7 +27,7 @@ interface Task {
   id: string;
   title: string;
   description: string | null;
-  status: 'not_started' | 'in_progress' | 'waiting' | 'done';
+  status: 'not_started' | 'in_progress' | 'waiting' | 'review' | 'done';
   created_at: string;
   updated_at: string;
   created_by: string;
@@ -957,6 +957,57 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
                   color: task.status === 'in_progress' ? '#FFFFFF' : '#3B82F6'
                 }}>
                   In Progress
+                </span>
+              </button>
+
+              <button
+                onClick={isAdmin ? () => handleStatusChange(task.id, 'review') : undefined}
+                style={{
+                  flex: 1,
+                  backgroundColor: task.status === 'review' ? '#F59E0B' : '#000000',
+                  border: task.status === 'review' ? 'none' : '1px solid #1A1A1A',
+                  borderRadius: '6px',
+                  padding: '10px',
+                  cursor: isAdmin ? 'pointer' : 'default',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '4px',
+                  opacity: task.status === 'review' ? 1 : 0.4
+                }}
+                onMouseEnter={(e) => {
+                  if (isAdmin && task.status !== 'review') {
+                    e.currentTarget.style.opacity = '0.6';
+                    e.currentTarget.style.borderColor = '#F59E0B40';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (isAdmin && task.status !== 'review') {
+                    e.currentTarget.style.opacity = '0.4';
+                    e.currentTarget.style.borderColor = '#1A1A1A';
+                  }
+                }}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke={task.status === 'review' ? '#FFFFFF' : '#F59E0B'}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  color: task.status === 'review' ? '#FFFFFF' : '#F59E0B'
+                }}>
+                  Review
                 </span>
               </button>
 
