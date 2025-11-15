@@ -37,6 +37,7 @@ function Admin() {
     userId: string;
     type: 'discovery' | 'proposal' | 'invoice';
   } | null>(null);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -243,7 +244,7 @@ function Admin() {
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
       {/* Header */}
-      <header style={{
+      <header className="admin-header" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -254,7 +255,7 @@ function Admin() {
         backgroundColor: '#000000',
         zIndex: 100
       }}>
-        <h1 style={{
+        <h1 className="admin-header-title" style={{
           fontSize: '20px',
           fontWeight: '600',
           margin: 0,
@@ -266,6 +267,7 @@ function Admin() {
 
         <button
           onClick={handleLogout}
+          className="admin-logout-btn"
           style={{
             backgroundColor: 'transparent',
             color: '#666666',
@@ -290,9 +292,173 @@ function Admin() {
         </button>
       </header>
 
-      <div style={{ display: 'flex' }}>
+      {/* Mobile Section Selector */}
+      <div className="admin-mobile-selector" style={{
+        display: 'none',
+        padding: '16px 20px',
+        borderBottom: '1px solid #333333',
+        backgroundColor: '#0A0A0A'
+      }}>
+        <button
+          onClick={() => setShowMobileMenu(!showMobileMenu)}
+          style={{
+            width: '100%',
+            backgroundColor: '#1A1A1A',
+            border: '1px solid #333333',
+            borderRadius: '8px',
+            padding: '14px 16px',
+            color: '#FFFFFF',
+            fontSize: '14px',
+            fontWeight: '500',
+            cursor: 'pointer',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {activeSection === 'upload' && (
+              <>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 4v10m-5-5l5-5 5 5M3 13v2h12v-2"/>
+                </svg>
+                Upload Project
+              </>
+            )}
+            {activeSection === 'users' && (
+              <>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 13v-1a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v1"/>
+                  <circle cx="7" cy="5" r="3"/>
+                  <path d="M13 7l2 2 4-4"/>
+                </svg>
+                User Management
+              </>
+            )}
+            {activeSection === 'emails' && (
+              <>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 5h12M3 5l6 4 6-4M3 5v8a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5"/>
+                </svg>
+                Send Updates
+              </>
+            )}
+          </span>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="#999999"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              transform: showMobileMenu ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.2s'
+            }}
+          >
+            <polyline points="6 8 10 12 14 8"/>
+          </svg>
+        </button>
+
+        {/* Dropdown Menu */}
+        {showMobileMenu && (
+          <div style={{
+            marginTop: '8px',
+            backgroundColor: '#1A1A1A',
+            border: '1px solid #333333',
+            borderRadius: '8px',
+            overflow: 'hidden'
+          }}>
+            <button
+              onClick={() => {
+                setActiveSection('upload');
+                setShowMobileMenu(false);
+              }}
+              style={{
+                width: '100%',
+                backgroundColor: activeSection === 'upload' ? '#0A0A0A' : 'transparent',
+                color: activeSection === 'upload' ? '#FFFFFF' : '#999999',
+                border: 'none',
+                borderBottom: '1px solid #333333',
+                padding: '14px 16px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                textAlign: 'left',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 4v10m-5-5l5-5 5 5M3 13v2h12v-2"/>
+              </svg>
+              Upload Project
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveSection('users');
+                setShowMobileMenu(false);
+              }}
+              style={{
+                width: '100%',
+                backgroundColor: activeSection === 'users' ? '#0A0A0A' : 'transparent',
+                color: activeSection === 'users' ? '#FFFFFF' : '#999999',
+                border: 'none',
+                borderBottom: '1px solid #333333',
+                padding: '14px 16px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                textAlign: 'left',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 13v-1a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v1"/>
+                <circle cx="7" cy="5" r="3"/>
+                <path d="M13 7l2 2 4-4"/>
+              </svg>
+              User Management
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveSection('emails');
+                setShowMobileMenu(false);
+              }}
+              style={{
+                width: '100%',
+                backgroundColor: activeSection === 'emails' ? '#0A0A0A' : 'transparent',
+                color: activeSection === 'emails' ? '#FFFFFF' : '#999999',
+                border: 'none',
+                padding: '14px 16px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                textAlign: 'left',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 5h12M3 5l6 4 6-4M3 5v8a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5"/>
+              </svg>
+              Send Updates
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="admin-layout" style={{ display: 'flex' }}>
         {/* Side Menu */}
-        <div style={{
+        <div className="admin-sidebar" style={{
           width: '240px',
           borderRight: '1px solid #333333',
           padding: '20px',
@@ -412,18 +578,20 @@ function Admin() {
         </div>
 
         {/* Main Content */}
-        <div style={{ flex: 1 }}>
+        <div className="admin-main-content" style={{ flex: 1 }}>
           {activeSection === 'upload' && <UploadProjectSection />}
 
           {activeSection === 'emails' && <SendUpdatesSection />}
 
           {activeSection === 'users' && (
-            <div style={{ padding: '20px' }}>
-              <div style={{
+            <div className="admin-users-section" style={{ padding: '20px' }}>
+              <div className="admin-users-header" style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '16px'
+                marginBottom: '16px',
+                gap: '12px',
+                flexWrap: 'wrap'
               }}>
                 <h2 style={{
                   fontSize: '20px',
@@ -467,10 +635,11 @@ function Admin() {
                   No users found
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="admin-users-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {users.map((u) => (
                     <div
                       key={u.id}
+                      className="admin-user-card"
                       style={{
                         backgroundColor: '#1A1A1A',
                         border: '1px solid #333333',
@@ -478,7 +647,9 @@ function Admin() {
                         padding: '16px',
                         display: 'flex',
                         justifyContent: 'space-between',
-                        alignItems: 'center'
+                        alignItems: 'center',
+                        gap: '12px',
+                        flexWrap: 'wrap'
                       }}
                     >
                       <div>
@@ -517,7 +688,7 @@ function Admin() {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <div className="admin-user-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                         {/* Milestone Icons */}
                         {!u.is_admin && (
                           <div style={{ display: 'flex', gap: '6px', marginRight: '8px' }}>

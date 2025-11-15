@@ -174,7 +174,7 @@ function Home() {
           alignItems: 'center',
           marginBottom: '40px'
         }}>
-          <div style={{
+          <div className="home-header-title" style={{
             fontSize: '20px',
             fontWeight: '600',
             letterSpacing: '-0.02em'
@@ -184,6 +184,7 @@ function Home() {
 
           <button
             onClick={handleLogout}
+            className="home-logout-btn"
             style={{
               backgroundColor: 'transparent',
               color: '#666666',
@@ -209,7 +210,7 @@ function Home() {
         </header>
 
         {/* Main Content - Centered */}
-        <div style={{
+        <div className="waiting-content" style={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
@@ -236,7 +237,7 @@ function Home() {
             `}</style>
           </div>
 
-          <h1 style={{
+          <h1 className="waiting-title" style={{
             fontSize: '28px',
             fontWeight: '600',
             marginBottom: '16px',
@@ -246,7 +247,7 @@ function Home() {
             Waiting to start your app with AppCatalyst
           </h1>
 
-          <p style={{
+          <p className="waiting-description" style={{
             fontSize: '16px',
             color: '#999999',
             lineHeight: '1.5',
@@ -271,7 +272,7 @@ function Home() {
               Progress Milestones
             </h3>
 
-            <div style={{
+            <div className="milestone-grid" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
               gap: '16px',
@@ -281,7 +282,7 @@ function Home() {
               {(() => {
                 const discovery = getMilestoneDisplay('discovery');
                 return (
-                  <div style={{
+                  <div className="milestone-card" style={{
                     backgroundColor: '#0A0A0A',
                     border: `1px solid ${discovery.completed ? discovery.color : '#333333'}`,
                     borderRadius: '12px',
@@ -342,7 +343,7 @@ function Home() {
               {(() => {
                 const proposal = getMilestoneDisplay('proposal');
                 return (
-                  <div style={{
+                  <div className="milestone-card" style={{
                     backgroundColor: '#0A0A0A',
                     border: `1px solid ${proposal.completed ? proposal.color : '#333333'}`,
                     borderRadius: '12px',
@@ -403,7 +404,7 @@ function Home() {
               {(() => {
                 const invoice = getMilestoneDisplay('invoice');
                 return (
-                  <div style={{
+                  <div className="milestone-card" style={{
                     backgroundColor: '#0A0A0A',
                     border: `1px solid ${invoice.completed ? invoice.color : '#333333'}`,
                     borderRadius: '12px',
@@ -490,7 +491,7 @@ function Home() {
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
       {/* Header */}
-      <header style={{
+      <header className="home-header" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -501,7 +502,7 @@ function Home() {
         backgroundColor: '#000000',
         zIndex: 100
       }}>
-        <div style={{
+        <div className="home-header-title" style={{
           fontSize: '20px',
           fontWeight: '600',
           letterSpacing: '-0.02em'
@@ -511,6 +512,7 @@ function Home() {
 
         <button
           onClick={handleLogout}
+          className="home-logout-btn"
           style={{
             backgroundColor: 'transparent',
             color: '#666666',
@@ -536,7 +538,7 @@ function Home() {
       </header>
 
       {/* User & Project Selector */}
-      <div style={{
+      <div className="selector-container" style={{
         padding: '20px',
         borderBottom: '1px solid #333333',
         backgroundColor: '#0A0A0A',
@@ -578,7 +580,7 @@ function Home() {
           isAdmin={isAdmin}
         />
       ) : (
-        <div style={{
+        <div className="empty-state" style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',

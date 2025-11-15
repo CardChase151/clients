@@ -83,7 +83,7 @@ function BottomBar({ activeTab }: BottomBarProps) {
   });
 
   return (
-    <div style={containerStyle}>
+    <div className="bottom-bar" style={containerStyle}>
       {tabs.map(tab => (
         <NavLink
           key={tab.id}

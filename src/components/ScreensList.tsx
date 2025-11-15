@@ -516,9 +516,9 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
   }
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div className="main-content-with-nav" style={{ padding: '20px' }}>
       {/* Controls Bar */}
-      <div style={{
+      <div className="controls-bar" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -527,7 +527,7 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
         flexWrap: 'wrap'
       }}>
         {/* Left Side - Priority */}
-        <div style={{
+        <div className="controls-left" style={{
           display: 'flex',
           gap: '8px',
           alignItems: 'center'
@@ -535,6 +535,7 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
           {priorityMode === 'none' ? (
             <button
               onClick={() => setPriorityMode('red')}
+              className="priority-btn"
               style={{
                 backgroundColor: '#EF444415',
                 border: '1px solid #EF444430',
@@ -567,13 +568,14 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
             </button>
           ) : (
             <>
-              <div style={{
+              <div className="priority-buttons" style={{
                 display: 'flex',
                 gap: '8px',
                 alignItems: 'center'
               }}>
                 <button
                   onClick={() => setPriorityMode('red')}
+                  className="priority-btn"
                   style={{
                     backgroundColor: priorityMode === 'red' ? '#EF4444' : '#EF444415',
                     border: priorityMode === 'red' ? 'none' : '1px solid #EF444430',
@@ -590,6 +592,7 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
                 </button>
                 <button
                   onClick={() => setPriorityMode('yellow')}
+                  className="priority-btn"
                   style={{
                     backgroundColor: priorityMode === 'yellow' ? '#EAB308' : '#EAB30815',
                     border: priorityMode === 'yellow' ? 'none' : '1px solid #EAB30830',
@@ -635,7 +638,7 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
 
         {/* Right Side - Reorder (Admin Only) */}
         {isAdmin && (
-          <div style={{
+          <div className="controls-right" style={{
             display: 'flex',
             gap: '8px',
             alignItems: 'center'
@@ -644,6 +647,7 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
               <>
                 <button
                   onClick={() => setReorderMode('click')}
+                  className="reorder-btn"
                   style={{
                     backgroundColor: '#8B5CF615',
                     border: '1px solid #8B5CF630',
@@ -674,6 +678,7 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
                 </button>
                 <button
                   onClick={() => setReorderMode('drag')}
+                  className="reorder-btn"
                   style={{
                     backgroundColor: '#06B6D415',
                     border: '1px solid #06B6D430',
@@ -705,7 +710,7 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
               </>
             ) : (
               <>
-                <div style={{
+                <div className="reorder-buttons" style={{
                   fontSize: '14px',
                   fontWeight: '600',
                   color: reorderMode === 'click' ? '#8B5CF6' : '#06B6D4'
@@ -771,7 +776,7 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
           items={screens.map(s => s.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div style={{
+          <div className="screens-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
             gap: '16px'
