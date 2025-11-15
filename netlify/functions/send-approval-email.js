@@ -23,7 +23,7 @@ exports.handler = async (event) => {
     }
 
     // Build email body
-    const greeting = firstName ? `Hi ${firstName},` : 'Hello,';
+    const greeting = firstName ? `Hi ${firstName},` : 'Hi,';
 
     const htmlBody = `
 <!DOCTYPE html>
@@ -42,7 +42,7 @@ exports.handler = async (event) => {
   <div style="background-color: #f0f8ff; padding: 20px; border-radius: 8px; border-left: 4px solid #3B82F6; margin: 24px 0;">
     <h3 style="color: #000; margin-top: 0; font-size: 18px;">What's Next?</h3>
     <ul style="margin: 12px 0; padding-left: 20px; color: #333;">
-      <li style="margin-bottom: 8px;">Log in to your account at <a href="https://appcatalystclients.netlify.app" style="color: #3B82F6;">appcatalystclients.netlify.app</a></li>
+      <li style="margin-bottom: 8px;">Log in to your account at <a href="https://projects.appcatalyst.org" style="color: #3B82F6;">projects.appcatalyst.org</a></li>
       <li style="margin-bottom: 8px;">Create your first project</li>
       <li style="margin-bottom: 8px;">Track your app development progress in real-time</li>
       <li style="margin-bottom: 8px;">Collaborate with our team as we build your vision</li>
