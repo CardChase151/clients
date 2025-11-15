@@ -25,44 +25,71 @@ exports.handler = async (event) => {
     // Build email body
     const greeting = firstName ? `Hi ${firstName},` : 'Hello,';
 
-    const emailBody = `
-${greeting}
+    const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <p>${greeting}</p>
 
-Your account has been created!
+  <p>Your account has been created!</p>
 
-**Login Details:**
-URL: https://appcatalystclients.netlify.app
-Email: ${to}
-Temporary Password: ${password}
+  <h3 style="color: #000; margin-top: 24px;">Login Details:</h3>
+  <p style="background-color: #f5f5f5; padding: 16px; border-radius: 8px; margin: 12px 0;">
+    <strong>URL:</strong> <a href="https://appcatalystclients.netlify.app" style="color: #0066cc;">https://appcatalystclients.netlify.app</a><br>
+    <strong>Email:</strong> ${to}<br>
+    <strong>Temporary Password:</strong> ${password}
+  </p>
 
-**Getting Started:**
-1. Fill out your profile with your information
-2. Change your password in the Account tab at the bottom
+  <h3 style="color: #000; margin-top: 24px;">Getting Started:</h3>
+  <ol style="margin: 12px 0; padding-left: 20px;">
+    <li>Fill out your profile with your information</li>
+    <li>Change your password in the Account tab at the bottom</li>
+  </ol>
 
-**We Track 3 Basic Phases:**
+  <h3 style="color: #000; margin-top: 24px;">We Track 3 Basic Phases:</h3>
 
-**1. Discovery** - Understanding Your Vision
-- Learn your goals and objectives
-- Research your industry and market
-- Understand how users will interact with your app
-- Analyze how your company and team work together
+  <div style="margin: 16px 0;">
+    <h4 style="color: #000; margin: 12px 0;">1. Discovery - Understanding Your Vision</h4>
+    <ul style="margin: 8px 0; padding-left: 20px;">
+      <li>Learn your goals and objectives</li>
+      <li>Research your industry and market</li>
+      <li>Understand how users will interact with your app</li>
+      <li>Analyze how your company and team work together</li>
+    </ul>
+  </div>
 
-**2. Proposal** - Planning Your Solution
-- Comprehensive project proposal will be sent to you
-- We'll review it together and answer all your questions
-- Finalize scope, timeline, and approach
+  <div style="margin: 16px 0;">
+    <h4 style="color: #000; margin: 12px 0;">2. Proposal - Planning Your Solution</h4>
+    <ul style="margin: 8px 0; padding-left: 20px;">
+      <li>Comprehensive project proposal will be sent to you</li>
+      <li>We'll review it together and answer all your questions</li>
+      <li>Finalize scope, timeline, and approach</li>
+    </ul>
+  </div>
 
-**3. Invoice** - Final Payment
-- Final invoice sent
-- Project will start shortly after this based on project timeline
+  <div style="margin: 16px 0;">
+    <h4 style="color: #000; margin: 12px 0;">3. Invoice - Final Payment</h4>
+    <ul style="margin: 8px 0; padding-left: 20px;">
+      <li>Final invoice sent</li>
+      <li>Project will start shortly after this based on project timeline</li>
+    </ul>
+  </div>
 
-**Task Manager:**
-You'll have access to a full task manager where you can see your app being built in real-time. Track screens, features, and progress as they're being developed.
+  <h3 style="color: #000; margin-top: 24px;">Task Manager:</h3>
+  <p>You'll have access to a full task manager where you can see your app being built in real-time. Track screens, features, and progress as they're being developed.</p>
 
-If you have any questions, feel free to reply to this email.
+  <p style="margin-top: 24px;">If you have any questions, feel free to reply to this email.</p>
 
-Best regards,
-AppCatalyst Team
+  <p style="margin-top: 24px;">
+    Best regards,<br>
+    <strong>AppCatalyst Team</strong>
+  </p>
+</body>
+</html>
     `.trim();
 
     // Send email via Resend
@@ -70,7 +97,7 @@ AppCatalyst Team
       from: 'AppCatalyst <noreply@appcatalyst.org>',
       to: [to],
       subject: 'Welcome to AppCatalyst - Your Account Details',
-      text: emailBody,
+      html: htmlBody,
     });
 
     return {
