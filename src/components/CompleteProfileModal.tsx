@@ -50,6 +50,25 @@ function CompleteProfileModal({ userId, userEmail, onComplete }: CompleteProfile
 
       if (updateError) throw updateError;
 
+      // Send notification email to admin
+      try {
+        await fetch('/.netlify/functions/send-profile-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: userEmail,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            phone: phoneNumber.trim(),
+            company: companyName.trim() || null,
+            appName: appName.trim()
+          })
+        });
+      } catch (emailErr) {
+        // Don't fail the whole operation if email fails
+        console.error('Failed to send notification email:', emailErr);
+      }
+
       onComplete();
     } catch (err: any) {
       setError(err.message || 'Failed to save profile');
