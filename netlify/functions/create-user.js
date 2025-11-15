@@ -10,7 +10,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { email, password, fullName } = JSON.parse(event.body);
+    const { email, password, firstName, lastName } = JSON.parse(event.body);
 
     // Validate inputs
     if (!email || !password) {
@@ -53,7 +53,8 @@ exports.handler = async (event) => {
       password,
       email_confirm: true, // Auto-confirm email so they can log in immediately
       user_metadata: {
-        full_name: fullName || ''
+        first_name: firstName || '',
+        last_name: lastName || ''
       }
     });
 

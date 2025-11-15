@@ -29,8 +29,9 @@ function Admin() {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
-  const [newUserName, setNewUserName] = useState('');
-  const [sendEmail, setSendEmail] = useState(false);
+  const [newUserFirstName, setNewUserFirstName] = useState('');
+  const [newUserLastName, setNewUserLastName] = useState('');
+  const [sendWelcomeEmail, setSendWelcomeEmail] = useState(false);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [milestoneModal, setMilestoneModal] = useState<{
@@ -38,6 +39,11 @@ function Admin() {
     type: 'discovery' | 'proposal' | 'invoice';
   } | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [sendMilestoneEmail, setSendMilestoneEmail] = useState(false);
+  const [updatingMilestone, setUpdatingMilestone] = useState(false);
+  const [selectedMilestoneValue, setSelectedMilestoneValue] = useState<string | null>(null);
+  const [milestoneUrl, setMilestoneUrl] = useState('');
+  const [proposalPdf, setProposalPdf] = useState<File | null>(null);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -126,7 +132,8 @@ function Admin() {
         body: JSON.stringify({
           email: newUserEmail,
           password: newUserPassword,
-          fullName: newUserName
+          firstName: newUserFirstName,
+          lastName: newUserLastName
         })
       });
 
@@ -139,12 +146,33 @@ function Admin() {
         throw new Error(data.error || 'Failed to create user');
       }
 
+      // Send welcome email if checkbox is checked
+      if (sendWelcomeEmail) {
+        const welcomeResponse = await fetch('/.netlify/functions/send-welcome-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: newUserEmail,
+            firstName: newUserFirstName,
+            password: newUserPassword
+          })
+        });
+
+        if (!welcomeResponse.ok) {
+          console.error('Welcome email failed to send');
+          // Don't fail the whole operation if email fails
+        }
+      }
+
       // Success - refresh user list and close modal
       setShowAddUserModal(false);
       setNewUserEmail('');
       setNewUserPassword('');
-      setNewUserName('');
-      setSendEmail(false);
+      setNewUserFirstName('');
+      setNewUserLastName('');
+      setSendWelcomeEmail(false);
       fetchUsers();
 
     } catch (err: any) {
@@ -182,13 +210,76 @@ function Admin() {
     }
   };
 
-  const handleMilestoneUpdate = async (userId: string, type: 'discovery' | 'proposal' | 'invoice', value: string | null) => {
+  const getMilestoneEmailContent = (type: 'discovery' | 'proposal' | 'invoice', value: string, url?: string) => {
+    const messages: { [key: string]: { subject: string; message: string | ((url?: string) => string) } } = {
+      'discovery-sent': {
+        subject: 'Discovery Period Information',
+        message: (url?: string) => {
+          const baseMessage = 'Generally, we charge for a discovery period to ensure we fully understand your goals, industry, user interactions, and how your company and team work together. This helps us create the best possible solution for you.';
+          if (url) {
+            return `${baseMessage}\n\nBelow is a link to your invoice for the discovery period:\n${url}\n\nPlease let us know if you have any questions.`;
+          }
+          return `${baseMessage}\n\nWe'll be in touch if that's necessary for this app.`;
+        }
+      },
+      'discovery-paid': {
+        subject: 'Account Update - Discovery Period',
+        message: 'Your account has been updated. Discovery period status has been marked as paid.'
+      },
+      'discovery-waived': {
+        subject: 'Account Update - Discovery Period',
+        message: 'Your account has been updated. Discovery period fee has been waived.'
+      },
+      'proposal-sent': {
+        subject: 'Your Project Proposal',
+        message: "Here's your project proposal! Let's talk soon about when we can review it together. Looking forward to discussing the details with you."
+      },
+      'proposal-reviewed': {
+        subject: 'Thank You - Proposal Review',
+        message: 'Thank you for taking the time to review the proposal together. We hope we are continuing to earn your trust and exceed your expectations.'
+      },
+      'invoice-sent': {
+        subject: 'Project Invoice',
+        message: (url?: string) => {
+          if (url) {
+            return `Included below is a link to the invoice directly:\n\n${url}\n\nPlease let us know if you have any questions.`;
+          }
+          return 'An invoice has been sent to you.';
+        }
+      },
+      'invoice-paid': {
+        subject: 'Thank You - Payment Received',
+        message: 'Thank you! Your payment has been received. We look forward to being the spark to your purpose and bringing your vision to life.'
+      },
+      'invoice-waived': {
+        subject: 'Account Update - Invoice',
+        message: 'Your account has been updated. Invoice has been waived.'
+      }
+    };
+
+    const content = messages[`${type}-${value}`];
+    if (typeof content.message === 'function') {
+      return { subject: content.subject, message: content.message(url) };
+    }
+    return { subject: content.subject, message: content.message };
+  };
+
+  const handleConfirmMilestone = async () => {
+    if (!milestoneModal || !selectedMilestoneValue) return;
+
+    setUpdatingMilestone(true);
+
     try {
       const updateData: any = {};
+      const { userId, type } = milestoneModal;
+      const value = selectedMilestoneValue;
 
       if (type === 'discovery') {
         updateData.discovery_payment_type = value;
-        if (value) {
+        if (value === 'sent') {
+          updateData.discovery_complete = false; // Sent but not complete
+          updateData.discovery_complete_date = null;
+        } else if (value) {
           updateData.discovery_complete = true;
           updateData.discovery_complete_date = new Date().toISOString();
         } else {
@@ -220,12 +311,93 @@ function Admin() {
         .update(updateData)
         .eq('id', userId);
 
-      if (!error) {
-        fetchUsers();
-        setMilestoneModal(null);
+      if (error) throw error;
+
+      // Send email if checkbox is checked and value is not null
+      if (sendMilestoneEmail && value) {
+        const userToEmail = users.find(u => u.id === userId);
+        const emailContent = getMilestoneEmailContent(type, value, milestoneUrl || undefined);
+
+        if (userToEmail && emailContent) {
+          const response = await fetch('/.netlify/functions/send-milestone-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              to: userToEmail.email,
+              firstName: userToEmail.first_name,
+              subject: emailContent.subject,
+              message: emailContent.message
+            })
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            console.error('Email send error:', data.error);
+            // Don't fail the whole operation if email fails
+            alert('Milestone updated but email failed to send: ' + (data.error || 'Unknown error'));
+          }
+        }
       }
-    } catch (err) {
+
+      fetchUsers();
+      setMilestoneModal(null);
+      setSendMilestoneEmail(false);
+      setSelectedMilestoneValue(null);
+      setMilestoneUrl('');
+      setProposalPdf(null);
+
+    } catch (err: any) {
       console.error('Error updating milestone:', err);
+      alert('Failed to update milestone: ' + err.message);
+    } finally {
+      setUpdatingMilestone(false);
+    }
+  };
+
+  const handleClearMilestone = async () => {
+    if (!milestoneModal) return;
+
+    setUpdatingMilestone(true);
+
+    try {
+      const updateData: any = {};
+      const { userId, type } = milestoneModal;
+
+      if (type === 'discovery') {
+        updateData.discovery_payment_type = null;
+        updateData.discovery_complete = false;
+        updateData.discovery_complete_date = null;
+      } else if (type === 'proposal') {
+        updateData.proposal_status = null;
+        updateData.proposal_reviewed = false;
+        updateData.proposal_reviewed_date = null;
+      } else if (type === 'invoice') {
+        updateData.invoice_payment_type = null;
+        updateData.invoice_fulfilled = false;
+        updateData.invoice_fulfilled_date = null;
+      }
+
+      const { error } = await supabase
+        .from('users')
+        .update(updateData)
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      fetchUsers();
+      setMilestoneModal(null);
+      setSendMilestoneEmail(false);
+      setSelectedMilestoneValue(null);
+      setMilestoneUrl('');
+      setProposalPdf(null);
+
+    } catch (err: any) {
+      console.error('Error clearing milestone:', err);
+      alert('Failed to clear milestone: ' + err.message);
+    } finally {
+      setUpdatingMilestone(false);
     }
   };
 
@@ -709,7 +881,7 @@ function Admin() {
                               onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
                               onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                             >
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill={u.discovery_payment_type ? '#4ADE80' : 'none'} stroke={u.discovery_payment_type ? '#4ADE80' : '#666666'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={u.discovery_payment_type ? '#FFFFFF' : '#666666'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="11" cy="11" r="8"/>
                                 <path d="M21 21l-4.35-4.35"/>
                               </svg>
@@ -732,7 +904,7 @@ function Admin() {
                               onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
                               onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                             >
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill={u.proposal_status ? '#3B82F6' : 'none'} stroke={u.proposal_status ? '#3B82F6' : '#666666'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={u.proposal_status ? '#FFFFFF' : '#666666'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                                 <polyline points="14 2 14 8 20 8"/>
                                 <line x1="16" y1="13" x2="8" y2="13"/>
@@ -758,7 +930,7 @@ function Admin() {
                               onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
                               onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                             >
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill={u.invoice_payment_type ? '#EAB308' : 'none'} stroke={u.invoice_payment_type ? '#EAB308' : '#666666'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={u.invoice_payment_type ? '#FFFFFF' : '#666666'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <rect x="2" y="5" width="20" height="14" rx="2"/>
                                 <line x1="2" y1="10" x2="22" y2="10"/>
                               </svg>
@@ -959,13 +1131,42 @@ function Admin() {
                   color: '#999999',
                   marginBottom: '6px'
                 }}>
-                  Full Name (Optional)
+                  First Name (Optional)
                 </label>
                 <input
                   type="text"
-                  value={newUserName}
-                  onChange={(e) => setNewUserName(e.target.value)}
-                  placeholder="John Doe"
+                  value={newUserFirstName}
+                  onChange={(e) => setNewUserFirstName(e.target.value)}
+                  placeholder="John"
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#0A0A0A',
+                    border: '1px solid #333333',
+                    borderRadius: '8px',
+                    padding: '10px 12px',
+                    fontSize: '14px',
+                    color: '#FFFFFF',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  color: '#999999',
+                  marginBottom: '6px'
+                }}>
+                  Last Name (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={newUserLastName}
+                  onChange={(e) => setNewUserLastName(e.target.value)}
+                  placeholder="Doe"
                   style={{
                     width: '100%',
                     backgroundColor: '#0A0A0A',
@@ -991,8 +1192,8 @@ function Admin() {
               }}>
                 <input
                   type="checkbox"
-                  checked={sendEmail}
-                  onChange={(e) => setSendEmail(e.target.checked)}
+                  checked={sendWelcomeEmail}
+                  onChange={(e) => setSendWelcomeEmail(e.target.checked)}
                   style={{
                     width: '18px',
                     height: '18px',
@@ -1005,9 +1206,9 @@ function Admin() {
                   cursor: 'pointer',
                   userSelect: 'none'
                 }}
-                onClick={() => setSendEmail(!sendEmail)}
+                onClick={() => setSendWelcomeEmail(!sendWelcomeEmail)}
                 >
-                  Send email notification? (Not functional yet)
+                  Send welcome email with login details
                 </label>
               </div>
 
@@ -1116,56 +1317,50 @@ function Admin() {
               {milestoneModal.type === 'discovery' && (
                 <>
                   <button
-                    onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'discovery', 'sent')}
+                    onClick={() => setSelectedMilestoneValue('sent')}
                     style={{
-                      backgroundColor: '#EAB308',
-                      color: '#000000',
-                      border: 'none',
+                      backgroundColor: selectedMilestoneValue === 'sent' ? '#FFFFFF' : 'transparent',
+                      color: selectedMilestoneValue === 'sent' ? '#000000' : '#FFFFFF',
+                      border: '1px solid #FFFFFF',
                       padding: '14px',
                       borderRadius: '8px',
                       fontSize: '14px',
                       fontWeight: '600',
                       cursor: 'pointer',
-                      transition: 'opacity 0.2s'
+                      transition: 'all 0.2s'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
-                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
                     Sent
                   </button>
                   <button
-                    onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'discovery', 'paid')}
+                    onClick={() => setSelectedMilestoneValue('paid')}
                     style={{
-                      backgroundColor: '#4ADE80',
-                      color: '#000000',
-                      border: 'none',
+                      backgroundColor: selectedMilestoneValue === 'paid' ? '#FFFFFF' : 'transparent',
+                      color: selectedMilestoneValue === 'paid' ? '#000000' : '#FFFFFF',
+                      border: '1px solid #FFFFFF',
                       padding: '14px',
                       borderRadius: '8px',
                       fontSize: '14px',
                       fontWeight: '600',
                       cursor: 'pointer',
-                      transition: 'opacity 0.2s'
+                      transition: 'all 0.2s'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
-                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
                     Paid
                   </button>
                   <button
-                    onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'discovery', 'waived')}
+                    onClick={() => setSelectedMilestoneValue('waived')}
                     style={{
-                      backgroundColor: '#3B82F6',
-                      color: '#FFFFFF',
-                      border: 'none',
+                      backgroundColor: selectedMilestoneValue === 'waived' ? '#FFFFFF' : 'transparent',
+                      color: selectedMilestoneValue === 'waived' ? '#000000' : '#FFFFFF',
+                      border: '1px solid #FFFFFF',
                       padding: '14px',
                       borderRadius: '8px',
                       fontSize: '14px',
                       fontWeight: '600',
                       cursor: 'pointer',
-                      transition: 'opacity 0.2s'
+                      transition: 'all 0.2s'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
-                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
                     Waived
                   </button>
@@ -1175,38 +1370,34 @@ function Admin() {
               {milestoneModal.type === 'proposal' && (
                 <>
                   <button
-                    onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'proposal', 'sent')}
+                    onClick={() => setSelectedMilestoneValue('sent')}
                     style={{
-                      backgroundColor: '#EAB308',
-                      color: '#000000',
-                      border: 'none',
+                      backgroundColor: selectedMilestoneValue === 'sent' ? '#FFFFFF' : 'transparent',
+                      color: selectedMilestoneValue === 'sent' ? '#000000' : '#FFFFFF',
+                      border: '1px solid #FFFFFF',
                       padding: '14px',
                       borderRadius: '8px',
                       fontSize: '14px',
                       fontWeight: '600',
                       cursor: 'pointer',
-                      transition: 'opacity 0.2s'
+                      transition: 'all 0.2s'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
-                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
                     Sent
                   </button>
                   <button
-                    onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'proposal', 'reviewed')}
+                    onClick={() => setSelectedMilestoneValue('reviewed')}
                     style={{
-                      backgroundColor: '#3B82F6',
-                      color: '#FFFFFF',
-                      border: 'none',
+                      backgroundColor: selectedMilestoneValue === 'reviewed' ? '#FFFFFF' : 'transparent',
+                      color: selectedMilestoneValue === 'reviewed' ? '#000000' : '#FFFFFF',
+                      border: '1px solid #FFFFFF',
                       padding: '14px',
                       borderRadius: '8px',
                       fontSize: '14px',
                       fontWeight: '600',
                       cursor: 'pointer',
-                      transition: 'opacity 0.2s'
+                      transition: 'all 0.2s'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
-                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
                     Reviewed
                   </button>
@@ -1216,108 +1407,226 @@ function Admin() {
               {milestoneModal.type === 'invoice' && (
                 <>
                   <button
-                    onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'invoice', 'sent')}
+                    onClick={() => setSelectedMilestoneValue('sent')}
                     style={{
-                      backgroundColor: '#EAB308',
-                      color: '#000000',
-                      border: 'none',
+                      backgroundColor: selectedMilestoneValue === 'sent' ? '#FFFFFF' : 'transparent',
+                      color: selectedMilestoneValue === 'sent' ? '#000000' : '#FFFFFF',
+                      border: '1px solid #FFFFFF',
                       padding: '14px',
                       borderRadius: '8px',
                       fontSize: '14px',
                       fontWeight: '600',
                       cursor: 'pointer',
-                      transition: 'opacity 0.2s'
+                      transition: 'all 0.2s'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
-                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
                     Sent
                   </button>
                   <button
-                    onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'invoice', 'paid')}
+                    onClick={() => setSelectedMilestoneValue('paid')}
                     style={{
-                      backgroundColor: '#4ADE80',
-                      color: '#000000',
-                      border: 'none',
+                      backgroundColor: selectedMilestoneValue === 'paid' ? '#FFFFFF' : 'transparent',
+                      color: selectedMilestoneValue === 'paid' ? '#000000' : '#FFFFFF',
+                      border: '1px solid #FFFFFF',
                       padding: '14px',
                       borderRadius: '8px',
                       fontSize: '14px',
                       fontWeight: '600',
                       cursor: 'pointer',
-                      transition: 'opacity 0.2s'
+                      transition: 'all 0.2s'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
-                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
                     Paid
                   </button>
                   <button
-                    onClick={() => handleMilestoneUpdate(milestoneModal.userId, 'invoice', 'waived')}
+                    onClick={() => setSelectedMilestoneValue('waived')}
                     style={{
-                      backgroundColor: '#3B82F6',
-                      color: '#FFFFFF',
-                      border: 'none',
+                      backgroundColor: selectedMilestoneValue === 'waived' ? '#FFFFFF' : 'transparent',
+                      color: selectedMilestoneValue === 'waived' ? '#000000' : '#FFFFFF',
+                      border: '1px solid #FFFFFF',
                       padding: '14px',
                       borderRadius: '8px',
                       fontSize: '14px',
                       fontWeight: '600',
                       cursor: 'pointer',
-                      transition: 'opacity 0.2s'
+                      transition: 'all 0.2s'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
-                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                   >
                     Waived
                   </button>
                 </>
               )}
 
-              {/* Clear Selection Button */}
-              <button
-                onClick={() => handleMilestoneUpdate(milestoneModal.userId, milestoneModal.type, null)}
-                style={{
-                  backgroundColor: '#F87171',
-                  color: '#000000',
-                  border: 'none',
-                  padding: '14px',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  marginTop: '12px',
-                  transition: 'opacity 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
-                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-              >
-                Clear Selection
-              </button>
+              {/* Optional URL field for Discovery/Invoice Sent */}
+              {((milestoneModal.type === 'discovery' && selectedMilestoneValue === 'sent') ||
+                (milestoneModal.type === 'invoice' && selectedMilestoneValue === 'sent')) && (
+                <div style={{ marginTop: '12px' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    color: '#999999',
+                    marginBottom: '6px'
+                  }}>
+                    Invoice URL (Optional)
+                  </label>
+                  <input
+                    type="url"
+                    value={milestoneUrl}
+                    onChange={(e) => setMilestoneUrl(e.target.value)}
+                    placeholder="https://square.link/..."
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#0A0A0A',
+                      border: '1px solid #333333',
+                      borderRadius: '8px',
+                      padding: '10px 12px',
+                      fontSize: '14px',
+                      color: '#FFFFFF',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              )}
 
-              <button
-                onClick={() => setMilestoneModal(null)}
-                style={{
-                  backgroundColor: 'transparent',
-                  color: '#666666',
-                  border: '1px solid #333333',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: '600',
+              {/* Optional PDF upload for Proposal Sent */}
+              {milestoneModal.type === 'proposal' && selectedMilestoneValue === 'sent' && (
+                <div style={{ marginTop: '12px' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    color: '#999999',
+                    marginBottom: '6px'
+                  }}>
+                    Proposal PDF (Optional)
+                  </label>
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => setProposalPdf(e.target.files?.[0] || null)}
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#0A0A0A',
+                      border: '1px solid #333333',
+                      borderRadius: '8px',
+                      padding: '10px 12px',
+                      fontSize: '14px',
+                      color: '#FFFFFF',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      cursor: 'pointer'
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Email Notification Checkbox */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '12px',
+                backgroundColor: '#0A0A0A',
+                borderRadius: '8px',
+                border: '1px solid #333333',
+                marginTop: '12px'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={sendMilestoneEmail}
+                  onChange={(e) => setSendMilestoneEmail(e.target.checked)}
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    cursor: 'pointer'
+                  }}
+                />
+                <label style={{
+                  fontSize: '13px',
+                  color: '#999999',
                   cursor: 'pointer',
-                  marginTop: '8px',
-                  transition: 'all 0.2s'
+                  userSelect: 'none'
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#1A1A1A';
-                  e.currentTarget.style.color = '#FFFFFF';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = '#666666';
-                }}
-              >
-                Cancel
-              </button>
+                onClick={() => setSendMilestoneEmail(!sendMilestoneEmail)}
+                >
+                  Send email notification to user
+                </label>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                <button
+                  onClick={() => {
+                    setMilestoneModal(null);
+                    setSelectedMilestoneValue(null);
+                    setSendMilestoneEmail(false);
+                    setMilestoneUrl('');
+                    setProposalPdf(null);
+                  }}
+                  disabled={updatingMilestone}
+                  style={{
+                    flex: 1,
+                    backgroundColor: 'transparent',
+                    color: '#666666',
+                    border: '1px solid #333333',
+                    padding: '14px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: updatingMilestone ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                    opacity: updatingMilestone ? 0.5 : 1
+                  }}
+                >
+                  Cancel
+                </button>
+
+                {selectedMilestoneValue && (
+                  <button
+                    onClick={handleConfirmMilestone}
+                    disabled={updatingMilestone}
+                    style={{
+                      flex: 1,
+                      backgroundColor: '#FFFFFF',
+                      color: '#000000',
+                      border: 'none',
+                      padding: '14px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: updatingMilestone ? 'not-allowed' : 'pointer',
+                      transition: 'opacity 0.2s',
+                      opacity: updatingMilestone ? 0.5 : 1
+                    }}
+                  >
+                    {updatingMilestone ? 'Updating...' : 'Confirm'}
+                  </button>
+                )}
+
+                {!selectedMilestoneValue && (
+                  <button
+                    onClick={handleClearMilestone}
+                    disabled={updatingMilestone}
+                    style={{
+                      flex: 1,
+                      backgroundColor: 'transparent',
+                      color: '#F87171',
+                      border: '1px solid #F87171',
+                      padding: '14px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: updatingMilestone ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s',
+                      opacity: updatingMilestone ? 0.5 : 1
+                    }}
+                  >
+                    Clear Selection
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
