@@ -14,6 +14,7 @@ interface User {
   approved: boolean;
   is_admin: boolean;
   created_at: string;
+  profile_complete: boolean;
   discovery_payment_type: 'paid' | 'waived' | null;
   proposal_status: 'sent' | 'reviewed' | null;
   invoice_payment_type: 'paid' | 'waived' | null;
@@ -884,6 +885,36 @@ function Admin() {
                         {/* Milestone Icons */}
                         {!u.is_admin && (
                           <div style={{ display: 'flex', gap: '6px', marginRight: '8px' }}>
+                            {/* Profile Completion Status Icon */}
+                            <div
+                              title={u.profile_complete ? "Profile Complete" : "Profile Incomplete"}
+                              style={{
+                                padding: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                opacity: u.profile_complete ? 1 : 0.4,
+                                position: 'relative'
+                              }}
+                            >
+                              {u.profile_complete ? (
+                                // Profile complete - user icon with checkmark
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                  <circle cx="12" cy="7" r="4"/>
+                                  <polyline points="9 11 11 13 15 9" strokeWidth="2.5"/>
+                                </svg>
+                              ) : (
+                                // Profile incomplete - user icon with X
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                  <circle cx="12" cy="7" r="4"/>
+                                  <line x1="10" y1="10" x2="14" y2="14" strokeWidth="2.5"/>
+                                  <line x1="14" y1="10" x2="10" y2="14" strokeWidth="2.5"/>
+                                </svg>
+                              )}
+                            </div>
+
                             {/* Discovery Icon */}
                             <button
                               onClick={() => setMilestoneModal({ userId: u.id, type: 'discovery' })}
