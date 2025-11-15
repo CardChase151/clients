@@ -6,7 +6,7 @@ interface Task {
   id: string;
   title: string;
   description: string | null;
-  status: 'not_started' | 'in_progress' | 'waiting' | 'done';
+  status: 'not_started' | 'in_progress' | 'waiting' | 'review' | 'done';
 }
 
 interface EditTaskModalProps {
