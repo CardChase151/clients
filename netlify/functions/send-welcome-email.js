@@ -50,7 +50,7 @@ exports.handler = async (event) => {
     <li>Change your password in the Account tab at the bottom</li>
   </ol>
 
-  <h3 style="color: #000; margin-top: 24px;">We Track 3 Basic Phases:</h3>
+  <h3 style="color: #000; margin-top: 24px;">Our Typical Process May Include:</h3>
 
   <div style="margin: 16px 0;">
     <h4 style="color: #000; margin: 12px 0;">1. Discovery - Understanding Your Vision</h4>
@@ -81,6 +81,10 @@ exports.handler = async (event) => {
 
   <h3 style="color: #000; margin-top: 24px;">Task Manager:</h3>
   <p>You'll have access to a full task manager where you can see your app being built in real-time. Track screens, features, and progress as they're being developed.</p>
+
+  <p style="background-color: #f0f8ff; padding: 12px; border-left: 3px solid #0066cc; margin: 24px 0; font-size: 14px; color: #555;">
+    <strong>Note:</strong> This email is sent to everyone who has an account with us for transparency. We realize you may be in contact with us and have a more personalized experience that may not reflect this exactly.
+  </p>
 
   <p style="margin-top: 24px;">If you have any questions, feel free to reply to this email.</p>
 
