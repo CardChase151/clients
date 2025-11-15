@@ -320,6 +320,23 @@ function Admin() {
         const emailContent = getMilestoneEmailContent(type, value, milestoneUrl || undefined);
 
         if (userToEmail && emailContent) {
+          // Convert PDF to base64 if present
+          let pdfBase64 = null;
+          let pdfFilename = null;
+          if (proposalPdf) {
+            const reader = new FileReader();
+            pdfBase64 = await new Promise<string>((resolve, reject) => {
+              reader.onload = () => {
+                const base64 = reader.result as string;
+                // Remove the data:application/pdf;base64, prefix
+                resolve(base64.split(',')[1]);
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(proposalPdf);
+            });
+            pdfFilename = proposalPdf.name;
+          }
+
           const response = await fetch('/.netlify/functions/send-milestone-email', {
             method: 'POST',
             headers: {
@@ -329,7 +346,9 @@ function Admin() {
               to: userToEmail.email,
               firstName: userToEmail.first_name,
               subject: emailContent.subject,
-              message: emailContent.message
+              message: emailContent.message,
+              pdfBase64: pdfBase64,
+              pdfFilename: pdfFilename
             })
           });
 

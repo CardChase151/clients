@@ -12,7 +12,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { to, firstName, subject, message } = JSON.parse(event.body);
+    const { to, firstName, subject, message, pdfBase64, pdfFilename } = JSON.parse(event.body);
 
     // Validate required fields
     if (!to || !subject || !message) {
@@ -36,13 +36,24 @@ Best regards,
 AppCatalyst Team
     `.trim();
 
-    // Send email via Resend
-    const data = await resend.emails.send({
+    // Prepare email options
+    const emailOptions = {
       from: 'AppCatalyst <noreply@appcatalyst.org>',
       to: [to],
       subject: subject,
       text: emailBody,
-    });
+    };
+
+    // Add PDF attachment if present
+    if (pdfBase64 && pdfFilename) {
+      emailOptions.attachments = [{
+        filename: pdfFilename,
+        content: pdfBase64,
+      }];
+    }
+
+    // Send email via Resend
+    const data = await resend.emails.send(emailOptions);
 
     return {
       statusCode: 200,
