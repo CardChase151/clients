@@ -46,6 +46,8 @@ function Admin() {
   const [milestoneUrl, setMilestoneUrl] = useState('');
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [proposalPdf, setProposalPdf] = useState<File | null>(null);
+  const [approvalModal, setApprovalModal] = useState<{ userId: string; userEmail: string; userName: string } | null>(null);
+  const [sendingApprovalEmail, setSendingApprovalEmail] = useState(false);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -89,11 +91,18 @@ function Admin() {
     }
   };
 
-  const toggleApproval = async (userId: string, currentStatus: boolean) => {
+  const toggleApproval = async (userId: string, currentStatus: boolean, userEmail: string, userName: string) => {
+    // If approving (currentStatus is false), show email confirmation modal
+    if (!currentStatus) {
+      setApprovalModal({ userId, userEmail, userName });
+      return;
+    }
+
+    // If unapproving, just do it without email
     try {
       const { error } = await supabase
         .from('users')
-        .update({ approved: !currentStatus })
+        .update({ approved: false })
         .eq('id', userId);
 
       if (!error) {
@@ -101,6 +110,44 @@ function Admin() {
       }
     } catch (err) {
       console.error('Error updating approval:', err);
+    }
+  };
+
+  const handleApprovalConfirm = async (sendEmail: boolean) => {
+    if (!approvalModal) return;
+
+    try {
+      // Update user approval status
+      const { error } = await supabase
+        .from('users')
+        .update({ approved: true })
+        .eq('id', approvalModal.userId);
+
+      if (error) throw error;
+
+      // Send email if requested
+      if (sendEmail) {
+        setSendingApprovalEmail(true);
+        try {
+          await fetch('/.netlify/functions/send-approval-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: approvalModal.userEmail,
+              firstName: approvalModal.userName.split(' ')[0]
+            })
+          });
+        } catch (emailErr) {
+          console.error('Failed to send approval email:', emailErr);
+        }
+        setSendingApprovalEmail(false);
+      }
+
+      fetchUsers();
+      setApprovalModal(null);
+    } catch (err) {
+      console.error('Error approving user:', err);
+      setSendingApprovalEmail(false);
     }
   };
 
@@ -990,7 +1037,12 @@ function Admin() {
                         )}
 
                         <button
-                          onClick={() => toggleApproval(u.id, u.approved)}
+                          onClick={() => toggleApproval(
+                            u.id,
+                            u.approved,
+                            u.email,
+                            u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.email
+                          )}
                           style={{
                             backgroundColor: u.approved ? 'transparent' : '#FFFFFF',
                             color: u.approved ? '#666666' : '#000000',
@@ -1683,6 +1735,107 @@ function Admin() {
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approval Confirmation Modal */}
+      {approvalModal && (
+        <div
+          onClick={() => setApprovalModal(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '20px'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#0A0A0A',
+              border: '1px solid #333333',
+              borderRadius: '12px',
+              padding: '32px',
+              maxWidth: '400px',
+              width: '100%'
+            }}
+          >
+            <h3 style={{
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#FFFFFF',
+              margin: '0 0 16px 0'
+            }}>
+              Approve User
+            </h3>
+
+            <p style={{
+              fontSize: '14px',
+              color: '#CCCCCC',
+              margin: '0 0 24px 0',
+              lineHeight: '1.6'
+            }}>
+              You're about to approve <strong style={{ color: '#FFFFFF' }}>{approvalModal.userName}</strong>.
+            </p>
+
+            <p style={{
+              fontSize: '14px',
+              color: '#CCCCCC',
+              margin: '0 0 24px 0',
+              lineHeight: '1.6'
+            }}>
+              Would you like to send them an email notification?
+            </p>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => handleApprovalConfirm(false)}
+                disabled={sendingApprovalEmail}
+                style={{
+                  flex: 1,
+                  backgroundColor: 'transparent',
+                  color: '#FFFFFF',
+                  border: '1px solid #333333',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: sendingApprovalEmail ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s',
+                  opacity: sendingApprovalEmail ? 0.5 : 1
+                }}
+              >
+                No Email
+              </button>
+
+              <button
+                onClick={() => handleApprovalConfirm(true)}
+                disabled={sendingApprovalEmail}
+                style={{
+                  flex: 1,
+                  backgroundColor: '#22C55E',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: sendingApprovalEmail ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s',
+                  opacity: sendingApprovalEmail ? 0.5 : 1
+                }}
+              >
+                {sendingApprovalEmail ? 'Sending...' : 'Send Email'}
+              </button>
             </div>
           </div>
         </div>
