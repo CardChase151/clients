@@ -32,6 +32,7 @@ interface Task {
   updated_at: string;
   created_by: string;
   sort_order?: number;
+  priority?: 'red' | 'yellow' | null;
   creator?: {
     first_name: string | null;
     last_name: string | null;
@@ -100,6 +101,7 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
 
   const fetchScreenAndTasks = async () => {
     setLoading(true);
+    console.log('[ScreenDetailView] 🔄 Fetching screen and tasks for screenId:', screenId);
 
     const [screenResult, tasksResult] = await Promise.all([
       supabase.from('screens').select(`
@@ -113,11 +115,62 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
     ]);
 
     if (!screenResult.error && screenResult.data) {
+      console.log('[ScreenDetailView] ✅ Screen loaded:', screenResult.data.title);
       setScreen(screenResult.data);
+    } else {
+      console.error('[ScreenDetailView] ❌ Error loading screen:', screenResult.error);
     }
 
     if (!tasksResult.error && tasksResult.data) {
-      setTasks(tasksResult.data);
+      console.log('[ScreenDetailView] ✅ Tasks loaded:', tasksResult.data.length, 'tasks');
+      console.log('[ScreenDetailView] 📊 Task sort_order values:', tasksResult.data.map(t => ({
+        id: t.id.substring(0, 8),
+        title: t.title,
+        sort_order: t.sort_order,
+        priority: t.priority
+      })));
+
+      // Check if any tasks are missing sort_order
+      const tasksWithoutOrder = tasksResult.data.filter(t => t.sort_order === null || t.sort_order === undefined);
+
+      if (tasksWithoutOrder.length > 0) {
+        console.warn('[ScreenDetailView] ⚠️ Found', tasksWithoutOrder.length, 'tasks without sort_order. Assigning order...');
+
+        // Assign sort_order based on created_at and update database
+        const sortedByCreation = [...tasksResult.data].sort((a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+
+        for (let i = 0; i < sortedByCreation.length; i++) {
+          if (sortedByCreation[i].sort_order === null || sortedByCreation[i].sort_order === undefined) {
+            const newOrder = i + 1;
+            console.log('[ScreenDetailView] 🔧 Assigning sort_order', newOrder, 'to task', sortedByCreation[i].id.substring(0, 8));
+
+            await supabase
+              .from('tasks')
+              .update({ sort_order: newOrder })
+              .eq('id', sortedByCreation[i].id);
+
+            sortedByCreation[i].sort_order = newOrder;
+          }
+        }
+
+        setTasks(sortedByCreation);
+      } else {
+        setTasks(tasksResult.data);
+      }
+
+      // Load priorities from database into state
+      const loadedPriorities: Record<string, 'red' | 'yellow'> = {};
+      tasksResult.data.forEach(task => {
+        if (task.priority === 'red' || task.priority === 'yellow') {
+          loadedPriorities[task.id] = task.priority;
+        }
+      });
+      console.log('[ScreenDetailView] 🎨 Loaded priorities from DB:', loadedPriorities);
+      setPriorities(loadedPriorities);
+    } else {
+      console.error('[ScreenDetailView] ❌ Error loading tasks:', tasksResult.error);
     }
 
     setLoading(false);
@@ -163,6 +216,8 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
+      console.log('[Drag & Drop] 🖐️ Drag ended - moving task from index', tasks.findIndex((t) => t.id === active.id), 'to', tasks.findIndex((t) => t.id === over.id));
+
       const oldIndex = tasks.findIndex((t) => t.id === active.id);
       const newIndex = tasks.findIndex((t) => t.id === over.id);
 
@@ -175,12 +230,20 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
         sort_order: index + 1
       }));
 
+      console.log('[Drag & Drop] 💾 Saving new order to database:', updates.map(u => ({ id: u.id.substring(0, 8), sort_order: u.sort_order })));
+
       for (const update of updates) {
-        await supabase
+        const { error } = await supabase
           .from('tasks')
           .update({ sort_order: update.sort_order })
           .eq('id', update.id);
+
+        if (error) {
+          console.error('[Drag & Drop] ❌ Error updating sort_order for task', update.id.substring(0, 8), ':', error);
+        }
       }
+
+      console.log('[Drag & Drop] ✅ All updates completed');
     }
   };
 
@@ -195,11 +258,15 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
   };
 
   const handleSaveClickOrder = async () => {
+    console.log('[Click Order] 📍 Saving click order:', clickOrder.map(id => id.substring(0, 8)));
+
     // Reorder tasks optimistically
     const reorderedTasks = [
       ...clickOrder.map(id => tasks.find(t => t.id === id)!),
       ...tasks.filter(t => !clickOrder.includes(t.id))
     ];
+
+    console.log('[Click Order] 🔄 New task order:', reorderedTasks.map(t => ({ id: t.id.substring(0, 8), title: t.title })));
 
     // Update UI immediately
     setTasks(reorderedTasks.map((task, index) => ({
@@ -211,12 +278,20 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
     setReorderMode('none');
 
     // Update database - await to ensure persistence
+    console.log('[Click Order] 💾 Updating database...');
     for (let i = 0; i < reorderedTasks.length; i++) {
-      await supabase
+      const { error } = await supabase
         .from('tasks')
         .update({ sort_order: i + 1 })
         .eq('id', reorderedTasks[i].id);
+
+      if (error) {
+        console.error('[Click Order] ❌ Error updating sort_order for task', reorderedTasks[i].id.substring(0, 8), ':', error);
+      } else {
+        console.log('[Click Order] ✅ Updated task', reorderedTasks[i].id.substring(0, 8), 'to sort_order:', i + 1);
+      }
     }
+    console.log('[Click Order] ✅ All updates completed');
   };
 
   const handleCancelReorder = () => {
@@ -224,17 +299,44 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
     setClickOrder([]);
   };
 
-  const handlePriorityClick = (taskId: string) => {
+  const handlePriorityClick = async (taskId: string) => {
     if (priorityMode === 'none') return;
 
-    setPriorities(prev => {
-      const current = prev[taskId];
+    console.log('[Priority] 🎨 Priority clicked for task', taskId.substring(0, 8), '- Mode:', priorityMode);
 
-      if (current === priorityMode) {
+    const current = priorities[taskId];
+    console.log('[Priority] Current priority:', current, '- New mode:', priorityMode);
+
+    let newPriority: 'red' | 'yellow' | null = null;
+
+    if (current === priorityMode) {
+      console.log('[Priority] ⚪ Removing priority (toggle off)');
+      newPriority = null;
+    } else {
+      console.log('[Priority] 🔴🟡 Setting priority to:', priorityMode);
+      newPriority = priorityMode;
+    }
+
+    // Update database
+    console.log('[Priority] 💾 Saving priority to database:', newPriority);
+    const { error } = await supabase
+      .from('tasks')
+      .update({ priority: newPriority })
+      .eq('id', taskId);
+
+    if (error) {
+      console.error('[Priority] ❌ Error updating priority:', error);
+      return;
+    }
+
+    console.log('[Priority] ✅ Priority saved to database');
+
+    // Update local state
+    setPriorities(prev => {
+      if (newPriority === null) {
         const { [taskId]: _, ...rest } = prev;
         return rest;
       }
-
       return { ...prev, [taskId]: priorityMode };
     });
   };
