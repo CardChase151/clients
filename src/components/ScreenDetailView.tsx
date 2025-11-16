@@ -210,9 +210,9 @@ function ScreenDetailView({ screenId, onBack }: ScreenDetailViewProps) {
     setClickOrder([]);
     setReorderMode('none');
 
-    // Update database in background
+    // Update database - await to ensure persistence
     for (let i = 0; i < reorderedTasks.length; i++) {
-      supabase
+      await supabase
         .from('tasks')
         .update({ sort_order: i + 1 })
         .eq('id', reorderedTasks[i].id);
