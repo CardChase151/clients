@@ -463,8 +463,12 @@ function SendUpdatesSection() {
                     {screenTitle}
                   </div>
                   {tasksByScreen[screenTitle].map((task: any, taskIdx: number) => (
-                    <div key={taskIdx} style={{ fontSize: '13px', color: '#CCCCCC', marginBottom: '4px', paddingLeft: '24px' }}>
-                      👁️ {task.title}
+                    <div key={taskIdx} style={{ fontSize: '13px', color: '#CCCCCC', marginBottom: '4px', paddingLeft: '24px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M7 3C4 3 2 7 2 7s2 4 5 4 5-4 5-4-2-4-5-4z"/>
+                        <circle cx="7" cy="7" r="1.5"/>
+                      </svg>
+                      {task.title}
                     </div>
                   ))}
                 </div>
@@ -494,8 +498,11 @@ function SendUpdatesSection() {
                     {screenTitle}
                   </div>
                   {tasksByScreen[screenTitle].map((task: any, taskIdx: number) => (
-                    <div key={taskIdx} style={{ fontSize: '13px', color: '#CCCCCC', marginBottom: '4px', paddingLeft: '24px' }}>
-                      ✅ {task.title}
+                    <div key={taskIdx} style={{ fontSize: '13px', color: '#CCCCCC', marginBottom: '4px', paddingLeft: '24px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 7 6 10 11 4"/>
+                      </svg>
+                      {task.title}
                     </div>
                   ))}
                 </div>
@@ -525,8 +532,12 @@ function SendUpdatesSection() {
                     {screenTitle}
                   </div>
                   {tasksByScreen[screenTitle].map((task: any, taskIdx: number) => (
-                    <div key={taskIdx} style={{ fontSize: '13px', color: '#CCCCCC', marginBottom: '4px', paddingLeft: '24px' }}>
-                      🔄 {task.title}
+                    <div key={taskIdx} style={{ fontSize: '13px', color: '#CCCCCC', marginBottom: '4px', paddingLeft: '24px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 4l-8 8M4 4l8 8"/>
+                        <circle cx="7" cy="7" r="5"/>
+                      </svg>
+                      {task.title}
                     </div>
                   ))}
                 </div>

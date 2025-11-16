@@ -117,7 +117,7 @@ function formatEmailHTML(personalMessage, changes, projectName) {
         html += `<div style="margin-bottom: 12px;">
           <div style="font-weight: 600; color: #000; margin-bottom: 6px; padding-left: 8px;">${screenTitle}</div>
           ${tasksByScreen[screenTitle].map(task =>
-            `<div class="item" style="padding-left: 24px;">👁️ ${task.title}</div>`
+            `<div class="item" style="padding-left: 24px;"><span style="color: #F59E0B;">○</span> ${task.title}</div>`
           ).join('')}
         </div>`;
       });
@@ -143,7 +143,7 @@ function formatEmailHTML(personalMessage, changes, projectName) {
         html += `<div style="margin-bottom: 12px;">
           <div style="font-weight: 600; color: #000; margin-bottom: 6px; padding-left: 8px;">${screenTitle}</div>
           ${tasksByScreen[screenTitle].map(task =>
-            `<div class="item" style="padding-left: 24px;">✅ ${task.title}</div>`
+            `<div class="item" style="padding-left: 24px;"><span style="color: #4ADE80;">✓</span> ${task.title}</div>`
           ).join('')}
         </div>`;
       });
@@ -169,7 +169,7 @@ function formatEmailHTML(personalMessage, changes, projectName) {
         html += `<div style="margin-bottom: 12px;">
           <div style="font-weight: 600; color: #000; margin-bottom: 6px; padding-left: 8px;">${screenTitle}</div>
           ${tasksByScreen[screenTitle].map(task =>
-            `<div class="item" style="padding-left: 24px;">🔄 ${task.title}</div>`
+            `<div class="item" style="padding-left: 24px;"><span style="color: #3B82F6;">↻</span> ${task.title}</div>`
           ).join('')}
         </div>`;
       });
