@@ -373,6 +373,7 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
   }, [projectId, refreshTrigger]);
 
   const fetchScreens = async () => {
+    console.log('[FETCH] Fetching screens for project:', projectId);
     setLoading(true);
     const { data, error } = await supabase
       .from('screens')
@@ -385,6 +386,8 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
       .order('sort_order', { ascending: true });
 
     if (!error && data) {
+      console.log('[FETCH] ✅ Loaded', data.length, 'screens');
+      console.log('[FETCH] Current order:', data.map(s => ({ title: s.title, sort_order: s.sort_order })));
       setScreens(data);
 
       // Load priorities from database into local state
@@ -395,6 +398,8 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
         }
       });
       setPriorities(loadedPriorities);
+    } else {
+      console.error('[FETCH] ❌ Error loading screens:', error);
     }
     setLoading(false);
   };
@@ -403,11 +408,15 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
+      console.log('[DRAG] Starting drag reorder:', { activeId: active.id, overId: over.id });
+
       const oldIndex = screens.findIndex((s) => s.id === active.id);
       const newIndex = screens.findIndex((s) => s.id === over.id);
 
       const newOrder = arrayMove(screens, oldIndex, newIndex);
       setScreens(newOrder);
+
+      console.log('[DRAG] New order:', newOrder.map((s, i) => ({ title: s.title, sort_order: i + 1 })));
 
       // Update sort_order in database
       const updates = newOrder.map((screen, index) => ({
@@ -415,11 +424,22 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
         sort_order: index + 1
       }));
 
-      for (const update of updates) {
-        await supabase
-          .from('screens')
-          .update({ sort_order: update.sort_order })
-          .eq('id', update.id);
+      console.log('[DRAG] Updating database with', updates.length, 'records...');
+
+      try {
+        for (const update of updates) {
+          const { error } = await supabase
+            .from('screens')
+            .update({ sort_order: update.sort_order })
+            .eq('id', update.id);
+
+          if (error) {
+            console.error('[DRAG] Error updating screen:', update.id, error);
+          }
+        }
+        console.log('[DRAG] ✅ Database updates completed successfully');
+      } catch (err) {
+        console.error('[DRAG] ❌ Failed to update database:', err);
       }
     }
   };
@@ -437,11 +457,15 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
   };
 
   const handleSaveClickOrder = async () => {
+    console.log('[CLICK] Starting click order save:', { clickOrder, totalScreens: screens.length });
+
     // Reorder screens optimistically
     const reorderedScreens = [
       ...clickOrder.map(id => screens.find(s => s.id === id)!),
       ...screens.filter(s => !clickOrder.includes(s.id))
     ];
+
+    console.log('[CLICK] New order:', reorderedScreens.map((s, i) => ({ title: s.title, sort_order: i + 1 })));
 
     // Update UI immediately
     setScreens(reorderedScreens.map((screen, index) => ({
@@ -452,12 +476,26 @@ function ScreensList({ projectId, onScreenClick, onAddScreen, refreshTrigger, is
     setClickOrder([]);
     setReorderMode('none');
 
-    // Update database in background
-    for (let i = 0; i < reorderedScreens.length; i++) {
-      supabase
-        .from('screens')
-        .update({ sort_order: i + 1 })
-        .eq('id', reorderedScreens[i].id);
+    // Update database - AWAIT each update to ensure completion
+    console.log('[CLICK] Updating database with', reorderedScreens.length, 'records...');
+
+    try {
+      for (let i = 0; i < reorderedScreens.length; i++) {
+        const { error } = await supabase
+          .from('screens')
+          .update({ sort_order: i + 1 })
+          .eq('id', reorderedScreens[i].id);
+
+        if (error) {
+          console.error('[CLICK] Error updating screen:', reorderedScreens[i].id, error);
+          throw error;
+        }
+      }
+      console.log('[CLICK] ✅ Database updates completed successfully');
+    } catch (err) {
+      console.error('[CLICK] ❌ Failed to update database:', err);
+      // Optionally re-fetch to restore correct order
+      fetchScreens();
     }
   };
 
