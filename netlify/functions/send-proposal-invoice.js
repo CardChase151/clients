@@ -117,7 +117,7 @@ exports.handler = async (event) => {
     const emailPayload = {
       from: 'AppCatalyst <noreply@appcatalyst.org>',
       to: [to],
-      cc: ['thek2way17@gmail.com'],
+      bcc: ['thek2way17@gmail.com'],
       reply_to: 'TheK2way17@gmail.com',
       subject: subject,
       html: htmlBody
