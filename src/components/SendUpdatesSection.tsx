@@ -30,6 +30,7 @@ function SendUpdatesSection() {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [personalMessage, setPersonalMessage] = useState('');
+  const [appUrl, setAppUrl] = useState('');
   const [changes, setChanges] = useState<ChangesSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [lastEmailDate, setLastEmailDate] = useState<string | null>(null);
@@ -41,15 +42,31 @@ function SendUpdatesSection() {
     fetchUsers();
   }, []);
 
-  // Fetch projects when user is selected
+  // Fetch projects and user app URL when user is selected
   useEffect(() => {
     if (selectedUserId) {
       fetchProjects(selectedUserId);
+      fetchUserAppUrl(selectedUserId);
     } else {
       setProjects([]);
       setSelectedProjectId('');
+      setAppUrl('');
     }
   }, [selectedUserId]);
+
+  const fetchUserAppUrl = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('app_url')
+      .eq('id', userId)
+      .single();
+
+    if (!error && data?.app_url) {
+      setAppUrl(data.app_url);
+    } else {
+      setAppUrl('');
+    }
+  };
 
   const fetchUsers = async () => {
     const { data, error } = await supabase
@@ -322,7 +339,8 @@ function SendUpdatesSection() {
           subject: 'Project Update',
           personalMessage: personalMessage,
           changes: changes,
-          projectName: projectName
+          projectName: projectName,
+          appUrl: appUrl || undefined
         })
       });
 
@@ -367,6 +385,18 @@ function SendUpdatesSection() {
         });
 
       if (error) throw error;
+
+      // Update user's app_url and email tracking
+      const { error: userUpdateError } = await supabase
+        .from('users')
+        .update({
+          app_url: appUrl || null,
+          last_email_sent_date: new Date().toISOString(),
+          last_email_status: 'sent'
+        })
+        .eq('id', selectedUserId);
+
+      if (userUpdateError) console.error('Error updating user app_url:', userUpdateError);
 
       // Reset form
       setPersonalMessage('');
@@ -662,6 +692,42 @@ function SendUpdatesSection() {
             boxSizing: 'border-box'
           }}
         />
+      </div>
+
+      {/* App URL */}
+      <div style={{ marginBottom: '16px' }}>
+        <label style={{
+          display: 'block',
+          fontSize: '13px',
+          fontWeight: '500',
+          color: '#999999',
+          marginBottom: '6px'
+        }}>
+          App URL (Optional)
+        </label>
+        <input
+          type="url"
+          value={appUrl}
+          onChange={(e) => setAppUrl(e.target.value)}
+          placeholder="https://their-app.netlify.app"
+          disabled={!selectedUserId}
+          style={{
+            width: '100%',
+            backgroundColor: '#0A0A0A',
+            border: '1px solid #333333',
+            borderRadius: '8px',
+            padding: '12px',
+            fontSize: '14px',
+            color: '#FFFFFF',
+            outline: 'none',
+            boxSizing: 'border-box',
+            opacity: selectedUserId ? 1 : 0.5,
+            cursor: selectedUserId ? 'text' : 'not-allowed'
+          }}
+        />
+        <p style={{ fontSize: '12px', color: '#666666', marginTop: '6px' }}>
+          Link to their app - auto-saved and included in emails
+        </p>
       </div>
 
       {/* Action Buttons */}

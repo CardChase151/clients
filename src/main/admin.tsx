@@ -18,6 +18,9 @@ interface User {
   discovery_payment_type: 'paid' | 'waived' | null;
   proposal_status: 'sent' | 'reviewed' | null;
   invoice_payment_type: 'paid' | 'waived' | null;
+  last_email_sent_date: string | null;
+  last_email_opened_date: string | null;
+  last_email_status: 'sent' | 'delivered' | 'opened' | 'clicked' | null;
 }
 
 function Admin() {
@@ -1008,6 +1011,20 @@ function Admin() {
                       </div>
 
                       <div className="admin-user-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        {/* Email Status */}
+                        {!u.is_admin && u.last_email_sent_date && (
+                          <div style={{ fontSize: '12px', color: '#666666', marginRight: '12px', whiteSpace: 'nowrap' }}>
+                            Sent: {new Date(u.last_email_sent_date).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                            {u.last_email_opened_date ? (
+                              <span style={{ color: '#4ADE80', marginLeft: '8px' }}>
+                                Opened: {new Date(u.last_email_opened_date).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                              </span>
+                            ) : (
+                              <span style={{ color: '#F59E0B', marginLeft: '8px' }}>Not opened</span>
+                            )}
+                          </div>
+                        )}
+
                         {/* Milestone Icons */}
                         {!u.is_admin && (
                           <div style={{ display: 'flex', gap: '6px', marginRight: '8px' }}>

@@ -10,7 +10,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { to, subject, personalMessage, changes, projectName } = JSON.parse(event.body);
+    const { to, subject, personalMessage, changes, projectName, appUrl } = JSON.parse(event.body);
 
     // Validate inputs
     if (!to || !subject || !personalMessage) {
@@ -90,6 +90,13 @@ function formatEmailHTML(personalMessage, changes, projectName) {
     </div>
 
     <div class="message">${personalMessage}</div>
+
+    ${appUrl ? `
+    <div style="background-color: #f5f5f5; padding: 16px; border-radius: 8px; margin: 20px 0;">
+      <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">Here is the link to your app:</p>
+      <a href="${appUrl}" style="color: #0066cc; font-weight: 600; font-size: 15px; text-decoration: none;">${appUrl}</a>
+    </div>
+    ` : ''}
 `;
 
   // Add changes section if there are any
