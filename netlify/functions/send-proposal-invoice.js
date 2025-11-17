@@ -33,7 +33,6 @@ exports.handler = async (event) => {
     const resend = new Resend(process.env.RESEND_API_KEY);
     console.log('[PROPOSAL/INVOICE] Resend initialized');
 
-    // Build email content
     const greeting = firstName ? `Hi ${firstName},` : 'Hello,';
 
     let subject, mainMessage, closingNote;
@@ -41,17 +40,15 @@ exports.handler = async (event) => {
     if (type === 'proposal') {
       subject = 'Your Project Proposal from AppCatalyst';
       mainMessage = 'It was great talking with you! I wanted to share your project proposal with you.';
-      closingNote = 'Please take your time to review it, and let me know if you have any questions or need clarification on anything. Once we're aligned on the proposal, I'll send over the invoice so we can get started on bringing your vision to life.';
+      closingNote = 'Please take your time to review it, and let me know if you have any questions or need clarification on anything. Once we are aligned on the proposal, I will send over the invoice so we can get started on bringing your vision to life.';
     } else {
       subject = 'Your Project Invoice from AppCatalyst';
-      mainMessage = 'It was great reviewing the proposal with you! I'm excited to move forward with your project.';
-      closingNote = 'Please review the invoice at your convenience. Once it's fulfilled, we'll begin work on your project. I'm looking forward to this partnership and can't wait to bring your vision to life!';
+      mainMessage = 'It was great reviewing the proposal with you! I am excited to move forward with your project.';
+      closingNote = 'Please review the invoice at your convenience. Once it is fulfilled, we will begin work on your project. I am looking forward to this partnership and cannot wait to bring your vision to life!';
     }
 
-    // Build file/link section
     let fileSection = '';
     if (fileUrl && pdfBase64) {
-      // Both URL and file
       const linkText = type === 'proposal' ? 'View Your Proposal' : 'View Your Invoice';
       fileSection = `
         <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 24px 0; text-align: center;">
@@ -63,7 +60,6 @@ exports.handler = async (event) => {
         </div>
       `;
     } else if (fileUrl) {
-      // Just URL
       const linkText = type === 'proposal' ? 'View Your Proposal' : 'View Your Invoice';
       fileSection = `
         <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 24px 0; text-align: center;">
@@ -74,7 +70,6 @@ exports.handler = async (event) => {
         </div>
       `;
     } else if (pdfBase64) {
-      // Just file
       fileSection = `
         <p style="background-color: #f5f5f5; padding: 16px; border-radius: 8px; margin: 24px 0; text-align: center; color: #666;">
           ${type === 'proposal' ? 'Proposal' : 'Invoice'} attached to this email
@@ -103,7 +98,7 @@ exports.handler = async (event) => {
   <p style="font-size: 16px; line-height: 1.7;">${closingNote}</p>
 
   <p style="font-size: 16px; line-height: 1.7; margin-top: 32px;">
-    I'm looking forward to working together!
+    I am looking forward to working together!
   </p>
 
   <p style="margin-top: 32px; font-size: 16px;">
@@ -119,7 +114,6 @@ exports.handler = async (event) => {
 </html>
     `.trim();
 
-    // Build email payload
     const emailPayload = {
       from: 'AppCatalyst <noreply@appcatalyst.org>',
       to: [to],
@@ -129,7 +123,6 @@ exports.handler = async (event) => {
       html: htmlBody
     };
 
-    // Add PDF attachment if provided
     if (pdfBase64 && pdfFilename) {
       emailPayload.attachments = [
         {
@@ -142,14 +135,14 @@ exports.handler = async (event) => {
     console.log('[PROPOSAL/INVOICE] Sending email to:', to);
     const data = await resend.emails.send(emailPayload);
 
-    console.log('[PROPOSAL/INVOICE] ✅ Email sent successfully, ID:', data.id);
+    console.log('[PROPOSAL/INVOICE] Email sent successfully, ID:', data.id);
     return {
       statusCode: 200,
       body: JSON.stringify({ success: true, messageId: data.id })
     };
 
   } catch (error) {
-    console.error('[PROPOSAL/INVOICE] ❌ Error sending email:', error);
+    console.error('[PROPOSAL/INVOICE] Error sending email:', error);
     console.error('[PROPOSAL/INVOICE] Error stack:', error.stack);
     return {
       statusCode: 500,
