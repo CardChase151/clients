@@ -387,16 +387,27 @@ function SendUpdatesSection() {
       if (error) throw error;
 
       // Update user's app_url and email tracking
-      const { error: userUpdateError } = await supabase
+      console.log('[EMAIL TRACKING] Updating user:', selectedUserId, {
+        app_url: appUrl || null,
+        last_email_sent_date: new Date().toISOString(),
+        last_email_status: 'sent'
+      });
+
+      const { data: updateData, error: userUpdateError } = await supabase
         .from('users')
         .update({
           app_url: appUrl || null,
           last_email_sent_date: new Date().toISOString(),
           last_email_status: 'sent'
         })
-        .eq('id', selectedUserId);
+        .eq('id', selectedUserId)
+        .select();
 
-      if (userUpdateError) console.error('Error updating user app_url:', userUpdateError);
+      if (userUpdateError) {
+        console.error('[EMAIL TRACKING] ❌ Error updating user:', userUpdateError);
+      } else {
+        console.log('[EMAIL TRACKING] ✅ User updated successfully:', updateData);
+      }
 
       // Reset form
       setPersonalMessage('');
