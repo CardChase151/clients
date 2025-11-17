@@ -388,11 +388,7 @@ function SendUpdatesSection() {
     const hasChanges =
       changes.reviewTasks.length > 0 ||
       changes.reviewToDone.length > 0 ||
-      changes.reviewToProgress.length > 0 ||
-      changes.completedTasks.length > 0 ||
-      changes.newScreens.length > 0 ||
-      changes.updatedScreens.length > 0 ||
-      changes.newTasks.length > 0;
+      changes.reviewToProgress.length > 0;
 
     if (!lastEmailDate) {
       return (
@@ -546,96 +542,6 @@ function SendUpdatesSection() {
           </div>
         )}
 
-        {changes.completedTasks.length > 0 && (
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '13px', fontWeight: '600', color: '#22C55E', marginBottom: '8px' }}>
-              NEWLY COMPLETED TASKS ({changes.completedTasks.length})
-            </div>
-            {(() => {
-              const tasksByScreen: { [key: string]: any[] } = {};
-              changes.completedTasks.forEach((task: any) => {
-                const screenTitle = task.screen_title || 'Unknown Screen';
-                if (!tasksByScreen[screenTitle]) {
-                  tasksByScreen[screenTitle] = [];
-                }
-                tasksByScreen[screenTitle].push(task);
-              });
-
-              return Object.keys(tasksByScreen).map((screenTitle, idx) => (
-                <div key={idx} style={{ marginBottom: '12px' }}>
-                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#FFFFFF', marginBottom: '6px', paddingLeft: '8px' }}>
-                    {screenTitle}
-                  </div>
-                  {tasksByScreen[screenTitle].map((task: any, taskIdx: number) => (
-                    <div key={taskIdx} style={{ fontSize: '13px', color: '#CCCCCC', marginBottom: '4px', paddingLeft: '24px' }}>
-                      ✓ {task.title}
-                    </div>
-                  ))}
-                </div>
-              ));
-            })()}
-          </div>
-        )}
-
-        {changes.newScreens.length > 0 && (
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '13px', fontWeight: '600', color: '#3B82F6', marginBottom: '8px' }}>
-              NEW SCREENS ({changes.newScreens.length})
-            </div>
-            {changes.newScreens.map((screen, idx) => (
-              <div key={idx} style={{ fontSize: '13px', color: '#CCCCCC', marginBottom: '4px', paddingLeft: '8px' }}>
-                + {screen.title}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {changes.updatedScreens.length > 0 && (
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '13px', fontWeight: '600', color: '#EAB308', marginBottom: '8px' }}>
-              SCREENS UPDATED ({changes.updatedScreens.length})
-            </div>
-            {changes.updatedScreens.map((screen, idx) => (
-              <div key={idx} style={{ fontSize: '13px', color: '#CCCCCC', marginBottom: '4px', paddingLeft: '8px' }}>
-                • {screen.title}
-                {screen.description && (
-                  <span style={{ color: '#666666' }}> - {screen.description}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {changes.newTasks.length > 0 && (
-          <div>
-            <div style={{ fontSize: '13px', fontWeight: '600', color: '#999999', marginBottom: '8px' }}>
-              NEW TASKS ({changes.newTasks.length})
-            </div>
-            {(() => {
-              const tasksByScreen: { [key: string]: any[] } = {};
-              changes.newTasks.forEach((task: any) => {
-                const screenTitle = task.screen_title || 'Unknown Screen';
-                if (!tasksByScreen[screenTitle]) {
-                  tasksByScreen[screenTitle] = [];
-                }
-                tasksByScreen[screenTitle].push(task);
-              });
-
-              return Object.keys(tasksByScreen).map((screenTitle, idx) => (
-                <div key={idx} style={{ marginBottom: '12px' }}>
-                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#FFFFFF', marginBottom: '6px', paddingLeft: '8px' }}>
-                    {screenTitle}
-                  </div>
-                  {tasksByScreen[screenTitle].map((task: any, taskIdx: number) => (
-                    <div key={taskIdx} style={{ fontSize: '13px', color: '#CCCCCC', marginBottom: '4px', paddingLeft: '24px' }}>
-                      • {task.title}
-                    </div>
-                  ))}
-                </div>
-              ));
-            })()}
-          </div>
-        )}
       </div>
     );
   };

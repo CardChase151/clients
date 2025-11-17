@@ -94,8 +94,7 @@ function formatEmailHTML(personalMessage, changes, projectName) {
 
   // Add changes section if there are any
   if (changes && (changes.reviewTasks?.length > 0 || changes.reviewToDone?.length > 0 ||
-      changes.reviewToProgress?.length > 0 || changes.completedTasks?.length > 0 ||
-      changes.newScreens?.length > 0 || changes.updatedScreens?.length > 0 || changes.newTasks?.length > 0)) {
+      changes.reviewToProgress?.length > 0)) {
 
     html += `<div class="changes"><h3>Recent Progress</h3>`;
 
@@ -177,79 +176,6 @@ function formatEmailHTML(personalMessage, changes, projectName) {
       html += `</div>`;
     }
 
-    // Newly completed tasks (not from review)
-    if (changes.completedTasks?.length > 0) {
-      const tasksByScreen = {};
-      changes.completedTasks.forEach(task => {
-        const screenTitle = task.screen_title || 'Unknown Screen';
-        if (!tasksByScreen[screenTitle]) {
-          tasksByScreen[screenTitle] = [];
-        }
-        tasksByScreen[screenTitle].push(task);
-      });
-
-      html += `<div class="section">
-        <div class="section-title completed">NEWLY COMPLETED TASKS (${changes.completedTasks.length})</div>`;
-
-      Object.keys(tasksByScreen).forEach(screenTitle => {
-        html += `<div style="margin-bottom: 12px;">
-          <div style="font-weight: 600; color: #000; margin-bottom: 6px; padding-left: 8px;">${screenTitle}</div>
-          ${tasksByScreen[screenTitle].map(task =>
-            `<div class="item" style="padding-left: 24px;">✓ ${task.title}</div>`
-          ).join('')}
-        </div>`;
-      });
-
-      html += `</div>`;
-    }
-
-    // New screens
-    if (changes.newScreens?.length > 0) {
-      html += `
-        <div class="section">
-          <div class="section-title new-screen">NEW SCREENS (${changes.newScreens.length})</div>
-          ${changes.newScreens.map(screen => `<div class="item">+ ${screen.title}</div>`).join('')}
-        </div>
-      `;
-    }
-
-    // Updated screens
-    if (changes.updatedScreens?.length > 0) {
-      html += `
-        <div class="section">
-          <div class="section-title updated">SCREENS UPDATED (${changes.updatedScreens.length})</div>
-          ${changes.updatedScreens.map(screen =>
-            `<div class="item">• ${screen.title}${screen.description ? ' - ' + screen.description : ''}</div>`
-          ).join('')}
-        </div>
-      `;
-    }
-
-    // Group new tasks by screen
-    if (changes.newTasks?.length > 0) {
-      const newTasksByScreen = {};
-      changes.newTasks.forEach(task => {
-        const screenTitle = task.screen_title || 'Unknown Screen';
-        if (!newTasksByScreen[screenTitle]) {
-          newTasksByScreen[screenTitle] = [];
-        }
-        newTasksByScreen[screenTitle].push(task);
-      });
-
-      html += `<div class="section">
-        <div class="section-title new-task">NEW TASKS (${changes.newTasks.length})</div>`;
-
-      Object.keys(newTasksByScreen).forEach(screenTitle => {
-        html += `<div style="margin-bottom: 12px;">
-          <div style="font-weight: 600; color: #000; margin-bottom: 6px; padding-left: 8px;">${screenTitle}</div>
-          ${newTasksByScreen[screenTitle].map(task =>
-            `<div class="item" style="padding-left: 24px;">• ${task.title}</div>`
-          ).join('')}
-        </div>`;
-      });
-
-      html += `</div>`;
-    }
 
     html += `</div>`;
   }
