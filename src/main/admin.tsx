@@ -46,6 +46,9 @@ function Admin() {
   const [milestoneUrl, setMilestoneUrl] = useState('');
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [proposalPdf, setProposalPdf] = useState<File | null>(null);
+  const [showSendNowModal, setShowSendNowModal] = useState<{ type: 'proposal' | 'invoice'; userId: string } | null>(null);
+  const [sendNowUrl, setSendNowUrl] = useState('');
+  const [sendingNow, setSendingNow] = useState(false);
   const [approvalModal, setApprovalModal] = useState<{ userId: string; userEmail: string; userName: string } | null>(null);
   const [sendingApprovalEmail, setSendingApprovalEmail] = useState(false);
 
@@ -466,6 +469,62 @@ function Admin() {
       alert('Failed to clear milestone: ' + err.message);
     } finally {
       setUpdatingMilestone(false);
+    }
+  };
+
+  const handleSendNow = async (userId: string, type: 'proposal' | 'invoice') => {
+    setSendingNow(true);
+
+    try {
+      const userToEmail = users.find(u => u.id === userId);
+      if (!userToEmail) throw new Error('User not found');
+
+      // Send the email
+      const response = await fetch('/.netlify/functions/send-proposal-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: userToEmail.email,
+          firstName: userToEmail.first_name,
+          type: type,
+          fileUrl: sendNowUrl || undefined,
+          hasFile: false // For now, just URL support
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to send email');
+      }
+
+      // Update database to mark as "sent"
+      const updateData: any = {};
+      if (type === 'proposal') {
+        updateData.proposal_status = 'sent';
+      } else {
+        updateData.invoice_payment_type = 'sent';
+        updateData.invoice_fulfilled = true;
+        updateData.invoice_fulfilled_date = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from('users')
+        .update(updateData)
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      // Success
+      fetchUsers();
+      setShowSendNowModal(null);
+      setSendNowUrl('');
+      alert(`${type === 'proposal' ? 'Proposal' : 'Invoice'} sent successfully!`);
+
+    } catch (err: any) {
+      console.error('Error sending:', err);
+      alert(`Failed to send ${type}: ` + err.message);
+    } finally {
+      setSendingNow(false);
     }
   };
 
@@ -1473,6 +1532,26 @@ function Admin() {
               {milestoneModal.type === 'proposal' && (
                 <>
                   <button
+                    onClick={() => {
+                      const userId = milestoneModal.userId;
+                      setMilestoneModal(null);
+                      setShowSendNowModal({ type: 'proposal', userId });
+                    }}
+                    style={{
+                      backgroundColor: '#10B981',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      padding: '14px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Send Now
+                  </button>
+                  <button
                     onClick={() => setSelectedMilestoneValue('sent')}
                     style={{
                       backgroundColor: selectedMilestoneValue === 'sent' ? '#FFFFFF' : 'transparent',
@@ -1509,6 +1588,26 @@ function Admin() {
 
               {milestoneModal.type === 'invoice' && (
                 <>
+                  <button
+                    onClick={() => {
+                      const userId = milestoneModal.userId;
+                      setMilestoneModal(null);
+                      setShowSendNowModal({ type: 'invoice', userId });
+                    }}
+                    style={{
+                      backgroundColor: '#10B981',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      padding: '14px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Send Now
+                  </button>
                   <button
                     onClick={() => setSelectedMilestoneValue('sent')}
                     style={{
@@ -1835,6 +1934,133 @@ function Admin() {
                 }}
               >
                 {sendingApprovalEmail ? 'Sending...' : 'Send Email'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send Now Modal */}
+      {showSendNowModal && (
+        <div
+          onClick={() => setShowSendNowModal(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#1A1A1A',
+              border: '1px solid #333333',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '500px',
+              width: '100%'
+            }}
+          >
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#FFFFFF',
+              margin: '0 0 8px 0'
+            }}>
+              Send {showSendNowModal.type === 'proposal' ? 'Proposal' : 'Invoice'} Now
+            </h3>
+
+            <p style={{
+              fontSize: '14px',
+              color: '#999999',
+              marginBottom: '20px',
+              lineHeight: '1.5'
+            }}>
+              This will send a professional email with your {showSendNowModal.type === 'proposal' ? 'proposal' : 'invoice'} and mark it as "Sent" in the system.
+            </p>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: '500',
+                color: '#999999',
+                marginBottom: '6px'
+              }}>
+                {showSendNowModal.type === 'proposal' ? 'Proposal' : 'Invoice'} URL
+              </label>
+              <input
+                type="url"
+                value={sendNowUrl}
+                onChange={(e) => setSendNowUrl(e.target.value)}
+                placeholder="https://..."
+                style={{
+                  width: '100%',
+                  backgroundColor: '#0A0A0A',
+                  border: '1px solid #333333',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  fontSize: '14px',
+                  color: '#FFFFFF',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <p style={{ fontSize: '12px', color: '#666666', marginTop: '6px' }}>
+                Optional: Add a link to view the {showSendNowModal.type === 'proposal' ? 'proposal' : 'invoice'} online
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  setShowSendNowModal(null);
+                  setSendNowUrl('');
+                }}
+                disabled={sendingNow}
+                style={{
+                  flex: 1,
+                  backgroundColor: 'transparent',
+                  color: '#666666',
+                  border: '1px solid #333333',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: sendingNow ? 'not-allowed' : 'pointer',
+                  opacity: sendingNow ? 0.5 : 1
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() => {
+                  handleSendNow(showSendNowModal.userId, showSendNowModal.type);
+                }}
+                disabled={sendingNow}
+                style={{
+                  flex: 1,
+                  backgroundColor: '#10B981',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: sendingNow ? 'not-allowed' : 'pointer',
+                  opacity: sendingNow ? 0.7 : 1
+                }}
+              >
+                {sendingNow ? 'Sending...' : 'Send Now'}
               </button>
             </div>
           </div>

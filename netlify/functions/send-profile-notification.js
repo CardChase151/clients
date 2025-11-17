@@ -81,7 +81,7 @@ exports.handler = async (event) => {
   </p>
 
   <p style="margin-top: 24px; color: #666; font-size: 14px;">
-    View in dashboard: <a href="https://appcatalystclients.netlify.app" style="color: #0066cc;">https://appcatalystclients.netlify.app</a>
+    View in dashboard: <a href="https://projects.appcatalyst.org" style="color: #0066cc;">https://projects.appcatalyst.org</a>
   </p>
 </body>
 </html>

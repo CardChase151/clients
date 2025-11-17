@@ -39,7 +39,7 @@ exports.handler = async (event) => {
 
   <h3 style="color: #000; margin-top: 24px;">Login Details:</h3>
   <p style="background-color: #f5f5f5; padding: 16px; border-radius: 8px; margin: 12px 0;">
-    <strong>URL:</strong> <a href="https://appcatalystclients.netlify.app" style="color: #0066cc;">https://appcatalystclients.netlify.app</a><br>
+    <strong>URL:</strong> <a href="https://projects.appcatalyst.org" style="color: #0066cc;">https://projects.appcatalyst.org</a><br>
     <strong>Email:</strong> ${to}<br>
     <strong>Temporary Password:</strong> ${password}
   </p>
