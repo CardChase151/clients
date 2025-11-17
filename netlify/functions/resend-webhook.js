@@ -1,8 +1,13 @@
 const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async (event) => {
+  console.log('[RESEND WEBHOOK] ========== WEBHOOK CALLED ==========');
+  console.log('[RESEND WEBHOOK] Method:', event.httpMethod);
+  console.log('[RESEND WEBHOOK] Body:', event.body);
+
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
+    console.log('[RESEND WEBHOOK] ❌ Method not allowed');
     return {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method not allowed' })
@@ -11,7 +16,8 @@ exports.handler = async (event) => {
 
   try {
     const payload = JSON.parse(event.body);
-    console.log('[RESEND WEBHOOK] Received event:', payload.type);
+    console.log('[RESEND WEBHOOK] ✅ Received event:', payload.type);
+    console.log('[RESEND WEBHOOK] Full payload:', JSON.stringify(payload, null, 2));
 
     // Initialize Supabase
     const supabase = createClient(
