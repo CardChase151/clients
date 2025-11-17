@@ -9,16 +9,29 @@ exports.handler = async (event) => {
   }
 
   try {
+    console.log('[PROPOSAL/INVOICE] Function invoked');
     const { to, firstName, type, fileUrl, pdfBase64, pdfFilename } = JSON.parse(event.body);
 
+    console.log('[PROPOSAL/INVOICE] Parsed request:', { to, firstName, type, hasUrl: !!fileUrl, hasPdf: !!pdfBase64 });
+
     if (!to || !type || (type !== 'proposal' && type !== 'invoice')) {
+      console.error('[PROPOSAL/INVOICE] Missing required fields');
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Missing required fields' })
       };
     }
 
+    if (!process.env.RESEND_API_KEY) {
+      console.error('[PROPOSAL/INVOICE] RESEND_API_KEY not set!');
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Email service not configured' })
+      };
+    }
+
     const resend = new Resend(process.env.RESEND_API_KEY);
+    console.log('[PROPOSAL/INVOICE] Resend initialized');
 
     // Build email content
     const greeting = firstName ? `Hi ${firstName},` : 'Hello,';
@@ -126,20 +139,24 @@ exports.handler = async (event) => {
       ];
     }
 
+    console.log('[PROPOSAL/INVOICE] Sending email to:', to);
     const data = await resend.emails.send(emailPayload);
 
+    console.log('[PROPOSAL/INVOICE] ✅ Email sent successfully, ID:', data.id);
     return {
       statusCode: 200,
       body: JSON.stringify({ success: true, messageId: data.id })
     };
 
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error('[PROPOSAL/INVOICE] ❌ Error sending email:', error);
+    console.error('[PROPOSAL/INVOICE] Error stack:', error.stack);
     return {
       statusCode: 500,
       body: JSON.stringify({
         error: 'Failed to send email',
-        details: error.message
+        details: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       })
     };
   }
