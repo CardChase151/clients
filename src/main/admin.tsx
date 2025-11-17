@@ -519,8 +519,13 @@ function Admin() {
         throw new Error(data.error || 'Failed to send email');
       }
 
-      // Update database to mark as "sent"
-      const updateData: any = {};
+      // Update database to mark as "sent" + track email
+      const updateData: any = {
+        last_email_sent_date: new Date().toISOString(),
+        last_email_status: 'sent',
+        last_email_opened_date: null // Reset opened date for new email
+      };
+
       if (type === 'proposal') {
         updateData.proposal_status = 'sent';
       } else {
