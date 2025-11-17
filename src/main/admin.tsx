@@ -524,9 +524,9 @@ function Admin() {
       if (type === 'proposal') {
         updateData.proposal_status = 'sent';
       } else {
-        updateData.invoice_payment_type = 'sent';
-        updateData.invoice_fulfilled = true;
-        updateData.invoice_fulfilled_date = new Date().toISOString();
+        // For invoice, we don't update invoice_payment_type (that's for paid/waived)
+        // Just track that we sent the invoice email
+        updateData.invoice_fulfilled = false; // Not yet paid/fulfilled
       }
 
       const { error } = await supabase
