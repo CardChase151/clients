@@ -48,6 +48,7 @@ function Admin() {
   const [proposalPdf, setProposalPdf] = useState<File | null>(null);
   const [showSendNowModal, setShowSendNowModal] = useState<{ type: 'proposal' | 'invoice'; userId: string } | null>(null);
   const [sendNowUrl, setSendNowUrl] = useState('');
+  const [sendNowFile, setSendNowFile] = useState<File | null>(null);
   const [sendingNow, setSendingNow] = useState(false);
   const [approvalModal, setApprovalModal] = useState<{ userId: string; userEmail: string; userName: string } | null>(null);
   const [sendingApprovalEmail, setSendingApprovalEmail] = useState(false);
@@ -479,6 +480,23 @@ function Admin() {
       const userToEmail = users.find(u => u.id === userId);
       if (!userToEmail) throw new Error('User not found');
 
+      // Convert PDF to base64 if present
+      let pdfBase64 = null;
+      let pdfFilename = null;
+      if (sendNowFile) {
+        const reader = new FileReader();
+        pdfBase64 = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => {
+            const base64 = reader.result as string;
+            // Remove the data:application/pdf;base64, prefix
+            resolve(base64.split(',')[1]);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(sendNowFile);
+        });
+        pdfFilename = sendNowFile.name;
+      }
+
       // Send the email
       const response = await fetch('/.netlify/functions/send-proposal-invoice', {
         method: 'POST',
@@ -488,7 +506,8 @@ function Admin() {
           firstName: userToEmail.first_name,
           type: type,
           fileUrl: sendNowUrl || undefined,
-          hasFile: false // For now, just URL support
+          pdfBase64: pdfBase64,
+          pdfFilename: pdfFilename
         })
       });
 
@@ -518,6 +537,7 @@ function Admin() {
       fetchUsers();
       setShowSendNowModal(null);
       setSendNowUrl('');
+      setSendNowFile(null);
       alert(`${type === 'proposal' ? 'Proposal' : 'Invoice'} sent successfully!`);
 
     } catch (err: any) {
@@ -2019,11 +2039,49 @@ function Admin() {
               </p>
             </div>
 
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: '500',
+                color: '#999999',
+                marginBottom: '6px'
+              }}>
+                Or Upload PDF File
+              </label>
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={(e) => setSendNowFile(e.target.files?.[0] || null)}
+                style={{
+                  width: '100%',
+                  backgroundColor: '#0A0A0A',
+                  border: '1px solid #333333',
+                  borderRadius: '8px',
+                  padding: '10px 12px',
+                  fontSize: '14px',
+                  color: '#FFFFFF',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  cursor: 'pointer'
+                }}
+              />
+              {sendNowFile && (
+                <p style={{ fontSize: '12px', color: '#10B981', marginTop: '6px' }}>
+                  ✓ Selected: {sendNowFile.name}
+                </p>
+              )}
+              <p style={{ fontSize: '12px', color: '#666666', marginTop: '6px' }}>
+                Optional: Attach a PDF file to the email
+              </p>
+            </div>
+
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 onClick={() => {
                   setShowSendNowModal(null);
                   setSendNowUrl('');
+                  setSendNowFile(null);
                 }}
                 disabled={sendingNow}
                 style={{

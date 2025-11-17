@@ -9,7 +9,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { to, firstName, type, fileUrl, hasFile } = JSON.parse(event.body);
+    const { to, firstName, type, fileUrl, pdfBase64, pdfFilename } = JSON.parse(event.body);
 
     if (!to || !type || (type !== 'proposal' && type !== 'invoice')) {
       return {
@@ -37,7 +37,20 @@ exports.handler = async (event) => {
 
     // Build file/link section
     let fileSection = '';
-    if (fileUrl) {
+    if (fileUrl && pdfBase64) {
+      // Both URL and file
+      const linkText = type === 'proposal' ? 'View Your Proposal' : 'View Your Invoice';
+      fileSection = `
+        <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 24px 0; text-align: center;">
+          <a href="${fileUrl}"
+             style="display: inline-block; background-color: #0066cc; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-weight: 600; font-size: 15px;">
+            ${linkText}
+          </a>
+          <p style="color: #666; font-size: 14px; margin-top: 12px;">Also attached as PDF to this email</p>
+        </div>
+      `;
+    } else if (fileUrl) {
+      // Just URL
       const linkText = type === 'proposal' ? 'View Your Proposal' : 'View Your Invoice';
       fileSection = `
         <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 24px 0; text-align: center;">
@@ -47,7 +60,8 @@ exports.handler = async (event) => {
           </a>
         </div>
       `;
-    } else if (hasFile) {
+    } else if (pdfBase64) {
+      // Just file
       fileSection = `
         <p style="background-color: #f5f5f5; padding: 16px; border-radius: 8px; margin: 24px 0; text-align: center; color: #666;">
           ${type === 'proposal' ? 'Proposal' : 'Invoice'} attached to this email
@@ -92,14 +106,27 @@ exports.handler = async (event) => {
 </html>
     `.trim();
 
-    const data = await resend.emails.send({
+    // Build email payload
+    const emailPayload = {
       from: 'AppCatalyst <noreply@appcatalyst.org>',
       to: [to],
       cc: ['thek2way17@gmail.com'],
       reply_to: 'TheK2way17@gmail.com',
       subject: subject,
       html: htmlBody
-    });
+    };
+
+    // Add PDF attachment if provided
+    if (pdfBase64 && pdfFilename) {
+      emailPayload.attachments = [
+        {
+          filename: pdfFilename,
+          content: pdfBase64
+        }
+      ];
+    }
+
+    const data = await resend.emails.send(emailPayload);
 
     return {
       statusCode: 200,
