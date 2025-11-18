@@ -100,7 +100,7 @@ function formatEmailHTML(personalMessage, changes, projectName, appUrl) {
 
   // Add changes section if there are any
   if (changes && (changes.reviewTasks?.length > 0 || changes.reviewToDone?.length > 0 ||
-      changes.reviewToProgress?.length > 0)) {
+      changes.reviewToProgress?.length > 0 || changes.completedTasks?.length > 0)) {
 
     html += `<div class="changes"><h3>Recent Progress</h3>`;
 
@@ -182,6 +182,31 @@ function formatEmailHTML(personalMessage, changes, projectName, appUrl) {
       html += `</div>`;
     }
 
+    // Completed tasks (not from review)
+    if (changes.completedTasks?.length > 0) {
+      const tasksByScreen = {};
+      changes.completedTasks.forEach(task => {
+        const screenTitle = task.screen_title || 'Unknown Screen';
+        if (!tasksByScreen[screenTitle]) {
+          tasksByScreen[screenTitle] = [];
+        }
+        tasksByScreen[screenTitle].push(task);
+      });
+
+      html += `<div class="section">
+        <div class="section-title completed">COMPLETED TASKS (${changes.completedTasks.length})</div>`;
+
+      Object.keys(tasksByScreen).forEach(screenTitle => {
+        html += `<div style="margin-bottom: 12px;">
+          <div style="font-weight: 600; color: #000; margin-bottom: 6px; padding-left: 8px;">${screenTitle}</div>
+          ${tasksByScreen[screenTitle].map(task =>
+            `<div class="item" style="padding-left: 24px;"><span style="color: #22C55E;">✓</span> ${task.title}</div>`
+          ).join('')}
+        </div>`;
+      });
+
+      html += `</div>`;
+    }
 
     html += `</div>`;
   }

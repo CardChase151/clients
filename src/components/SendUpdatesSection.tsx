@@ -429,7 +429,8 @@ function SendUpdatesSection() {
     const hasChanges =
       changes.reviewTasks.length > 0 ||
       changes.reviewToDone.length > 0 ||
-      changes.reviewToProgress.length > 0;
+      changes.reviewToProgress.length > 0 ||
+      changes.completedTasks.length > 0;
 
     if (!lastEmailDate) {
       return (
@@ -573,6 +574,40 @@ function SendUpdatesSection() {
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12 4l-8 8M4 4l8 8"/>
                         <circle cx="7" cy="7" r="5"/>
+                      </svg>
+                      {task.title}
+                    </div>
+                  ))}
+                </div>
+              ));
+            })()}
+          </div>
+        )}
+
+        {changes.completedTasks.length > 0 && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontSize: '13px', fontWeight: '600', color: '#22C55E', marginBottom: '8px' }}>
+              COMPLETED TASKS ({changes.completedTasks.length})
+            </div>
+            {(() => {
+              const tasksByScreen: { [key: string]: any[] } = {};
+              changes.completedTasks.forEach((task: any) => {
+                const screenTitle = task.screen_title || 'Unknown Screen';
+                if (!tasksByScreen[screenTitle]) {
+                  tasksByScreen[screenTitle] = [];
+                }
+                tasksByScreen[screenTitle].push(task);
+              });
+
+              return Object.keys(tasksByScreen).map((screenTitle, idx) => (
+                <div key={idx} style={{ marginBottom: '12px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#FFFFFF', marginBottom: '6px', paddingLeft: '8px' }}>
+                    {screenTitle}
+                  </div>
+                  {tasksByScreen[screenTitle].map((task: any, taskIdx: number) => (
+                    <div key={taskIdx} style={{ fontSize: '13px', color: '#CCCCCC', marginBottom: '4px', paddingLeft: '24px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 7 6 10 11 4"/>
                       </svg>
                       {task.title}
                     </div>
