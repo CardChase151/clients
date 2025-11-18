@@ -1,4 +1,5 @@
 const { Resend } = require('resend');
+const { createClient } = require('@supabase/supabase-js');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -12,7 +13,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { to, firstName, password } = JSON.parse(event.body);
+    const { to, firstName, password, userId } = JSON.parse(event.body);
 
     // Validate required fields
     if (!to || !password) {
@@ -103,6 +104,25 @@ exports.handler = async (event) => {
       subject: 'Welcome to AppCatalyst - Your Account Details',
       html: htmlBody,
     });
+
+    // Save to email_history
+    if (userId) {
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+      const supabaseKey = process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
+
+      if (supabaseUrl && supabaseKey) {
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        await supabase.from('email_history').insert({
+          user_id: userId,
+          project_id: null,
+          sent_by: userId,
+          personal_message: '',
+          changes_snapshot: {},
+          email_subject: 'Welcome to AppCatalyst - Your Account Details',
+          email_sent_successfully: true
+        });
+      }
+    }
 
     return {
       statusCode: 200,

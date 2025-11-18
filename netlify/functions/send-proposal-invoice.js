@@ -1,4 +1,5 @@
 const { Resend } = require('resend');
+const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -10,7 +11,7 @@ exports.handler = async (event) => {
 
   try {
     console.log('[PROPOSAL/INVOICE] Function invoked');
-    const { to, firstName, type, fileUrl, pdfBase64, pdfFilename } = JSON.parse(event.body);
+    const { to, firstName, type, fileUrl, pdfBase64, pdfFilename, userId } = JSON.parse(event.body);
 
     console.log('[PROPOSAL/INVOICE] Parsed request:', { to, firstName, type, hasUrl: !!fileUrl, hasPdf: !!pdfBase64 });
 
@@ -135,6 +136,29 @@ exports.handler = async (event) => {
     const data = await resend.emails.send(emailPayload);
 
     console.log('[PROPOSAL/INVOICE] Email sent successfully, ID:', data.id);
+
+    // Save to email_history
+    if (userId) {
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+      const supabaseKey = process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
+
+      if (supabaseUrl && supabaseKey) {
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        await supabase.from('email_history').insert({
+          user_id: userId,
+          project_id: null,
+          sent_by: userId,
+          personal_message: '',
+          changes_snapshot: {},
+          email_subject: subject,
+          email_sent_successfully: true
+        });
+
+        console.log('[PROPOSAL/INVOICE] Saved to email_history');
+      }
+    }
+
     return {
       statusCode: 200,
       body: JSON.stringify({ success: true, messageId: data.id })

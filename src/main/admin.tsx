@@ -511,7 +511,8 @@ function Admin() {
           type: type,
           fileUrl: sendNowUrl || undefined,
           pdfBase64: pdfBase64,
-          pdfFilename: pdfFilename
+          pdfFilename: pdfFilename,
+          userId: userId
         })
       });
 
