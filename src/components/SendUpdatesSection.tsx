@@ -878,7 +878,7 @@ function SendUpdatesSection() {
                 {personalMessage}
               </div>
 
-              {lastEmailDate && (
+              {changes && (
                 <>
                   <div style={{ margin: '20px 0', borderTop: '1px solid #333333' }} />
                   {formatChangesForDisplay()}
