@@ -13,7 +13,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { to, firstName, subject, message, pdfBase64, pdfFilename } = JSON.parse(event.body);
+    const { to, firstName, subject, message, pdfBase64, pdfFilename, userId } = JSON.parse(event.body);
 
     // Validate required fields
     if (!to || !subject || !message) {
@@ -66,6 +66,25 @@ exports.handler = async (event) => {
 
     // Send email via Resend
     const data = await resend.emails.send(emailOptions);
+
+    // Save to email_history
+    if (userId) {
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+      const supabaseKey = process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
+
+      if (supabaseUrl && supabaseKey) {
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        await supabase.from('email_history').insert({
+          user_id: userId,
+          project_id: null,
+          sent_by: userId,
+          personal_message: message,
+          changes_snapshot: {},
+          email_subject: subject,
+          email_sent_successfully: true
+        });
+      }
+    }
 
     return {
       statusCode: 200,

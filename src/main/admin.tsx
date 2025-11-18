@@ -404,7 +404,8 @@ function Admin() {
               subject: emailContent.subject,
               message: emailContent.message,
               pdfBase64: pdfBase64,
-              pdfFilename: pdfFilename
+              pdfFilename: pdfFilename,
+              userId: userId
             })
           });
 
