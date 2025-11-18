@@ -24,7 +24,7 @@ exports.handler = async (event) => {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     // Format the email body with HTML
-    const htmlBody = formatEmailHTML(personalMessage, changes, projectName);
+    const htmlBody = formatEmailHTML(personalMessage, changes, projectName, appUrl);
 
     // Send email via Resend
     const data = await resend.emails.send({
@@ -55,7 +55,7 @@ exports.handler = async (event) => {
   }
 };
 
-function formatEmailHTML(personalMessage, changes, projectName) {
+function formatEmailHTML(personalMessage, changes, projectName, appUrl) {
   let html = `
 <!DOCTYPE html>
 <html>
