@@ -19,9 +19,9 @@ exports.handler = async (event) => {
     console.log('[RESEND WEBHOOK] ✅ Received event:', payload.type);
     console.log('[RESEND WEBHOOK] Full payload:', JSON.stringify(payload, null, 2));
 
-    // Initialize Supabase
-    const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-    const supabaseKey = process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
+    // Initialize Supabase - use the exact env var names from Netlify
+    const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+    const supabaseKey = process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
 
     console.log('[RESEND WEBHOOK] Supabase URL exists:', !!supabaseUrl);
     console.log('[RESEND WEBHOOK] Supabase Key exists:', !!supabaseKey);
