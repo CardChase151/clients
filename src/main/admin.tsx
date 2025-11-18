@@ -5,6 +5,7 @@ import { supabase } from '../config/supabase';
 import BottomBar from '../menu/bottombar';
 import UploadProjectSection from '../components/UploadProjectSection';
 import SendUpdatesSection from '../components/SendUpdatesSection';
+import EmailDashboard from '../components/EmailDashboard';
 
 interface User {
   id: string;
@@ -29,7 +30,7 @@ function Admin() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeSection, setActiveSection] = useState<'upload' | 'users' | 'emails'>('upload');
+  const [activeSection, setActiveSection] = useState<'upload' | 'users' | 'emails' | 'history'>('upload');
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
@@ -670,6 +671,15 @@ function Admin() {
                 Send Updates
               </>
             )}
+            {activeSection === 'history' && (
+              <>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="4" width="14" height="11" rx="2"/>
+                  <path d="M2 7h14M6 4v-2M12 4v-2"/>
+                </svg>
+                Email History
+              </>
+            )}
           </span>
           <svg
             width="20"
@@ -778,6 +788,33 @@ function Admin() {
                 <path d="M3 5h12M3 5l6 4 6-4M3 5v8a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5"/>
               </svg>
               Send Updates
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveSection('history');
+                setShowMobileMenu(false);
+              }}
+              style={{
+                width: '100%',
+                backgroundColor: activeSection === 'history' ? '#0A0A0A' : 'transparent',
+                color: activeSection === 'history' ? '#FFFFFF' : '#999999',
+                border: 'none',
+                padding: '14px 16px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                textAlign: 'left',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="4" width="14" height="11" rx="2"/>
+                <path d="M2 7h14M6 4v-2M12 4v-2"/>
+              </svg>
+              Email History
             </button>
           </div>
         )}
@@ -901,6 +938,43 @@ function Admin() {
               </svg>
               Send Updates
             </button>
+
+            <button
+              onClick={() => setActiveSection('history')}
+              style={{
+                backgroundColor: activeSection === 'history' ? '#1A1A1A' : 'transparent',
+                color: activeSection === 'history' ? '#FFFFFF' : '#999999',
+                border: activeSection === 'history' ? '1px solid #333333' : '1px solid transparent',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
+              onMouseEnter={(e) => {
+                if (activeSection !== 'history') {
+                  e.currentTarget.style.backgroundColor = '#0A0A0A';
+                  e.currentTarget.style.color = '#FFFFFF';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeSection !== 'history') {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#999999';
+                }
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="4" width="14" height="11" rx="2"/>
+                <path d="M2 7h14M6 4v-2M12 4v-2"/>
+              </svg>
+              Email History
+            </button>
           </div>
         </div>
 
@@ -909,6 +983,20 @@ function Admin() {
           {activeSection === 'upload' && <UploadProjectSection />}
 
           {activeSection === 'emails' && <SendUpdatesSection />}
+
+          {activeSection === 'history' && (
+            <div style={{ padding: '20px' }}>
+              <h2 style={{
+                fontSize: '20px',
+                fontWeight: '600',
+                margin: '0 0 20px 0',
+                color: '#FFFFFF'
+              }}>
+                Email History
+              </h2>
+              <EmailDashboard />
+            </div>
+          )}
 
           {activeSection === 'users' && (
             <div className="admin-users-section" style={{ padding: '20px' }}>
