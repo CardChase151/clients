@@ -30,8 +30,7 @@ exports.handler = async (event) => {
     const data = await resend.emails.send({
       from: 'AppCatalyst <noreply@appcatalyst.org>',
       to: [to],
-      bcc: ['thek2way17@gmail.com'],
-      reply_to: 'TheK2way17@gmail.com',
+      reply_to: 'chase@appcatalyst.org',
       subject: subject,
       html: htmlBody
     });
@@ -191,7 +190,7 @@ function formatEmailHTML(personalMessage, changes, projectName) {
     <div class="footer">
       Best regards,<br>
       AppCatalyst Team<br><br>
-      Questions? Reach me at my direct inbox: TheK2way17@gmail.com
+      Questions? Reach me at my direct inbox: chase@appcatalyst.org
     </div>
   </div>
 </body>

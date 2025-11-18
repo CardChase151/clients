@@ -108,7 +108,7 @@ exports.handler = async (event) => {
   </p>
 
   <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 13px;">
-    <p>Questions? Feel free to reply to this email or reach me directly at TheK2way17@gmail.com</p>
+    <p>Questions? Feel free to reply to this email or reach me directly at chase@appcatalyst.org</p>
   </div>
 </body>
 </html>
@@ -117,8 +117,7 @@ exports.handler = async (event) => {
     const emailPayload = {
       from: 'AppCatalyst <noreply@appcatalyst.org>',
       to: [to],
-      bcc: ['thek2way17@gmail.com'],
-      reply_to: 'TheK2way17@gmail.com',
+      reply_to: 'chase@appcatalyst.org',
       subject: subject,
       html: htmlBody
     };

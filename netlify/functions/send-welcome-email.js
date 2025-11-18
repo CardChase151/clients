@@ -100,7 +100,6 @@ exports.handler = async (event) => {
     const data = await resend.emails.send({
       from: 'AppCatalyst <noreply@appcatalyst.org>',
       to: [to],
-      bcc: ['thek2way17@gmail.com'],
       subject: 'Welcome to AppCatalyst - Your Account Details',
       html: htmlBody,
     });

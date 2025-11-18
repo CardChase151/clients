@@ -90,7 +90,7 @@ exports.handler = async (event) => {
     // Send email via Resend
     const data = await resend.emails.send({
       from: 'AppCatalyst <noreply@appcatalyst.org>',
-      to: ['thek2way17@gmail.com'], // Your K2 email
+      to: ['chase@appcatalyst.org'], // Your K2 email
       subject: `Profile Completed - ${userName}`,
       html: htmlBody,
     });
