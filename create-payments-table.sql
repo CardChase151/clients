@@ -28,6 +28,12 @@ CREATE POLICY "Admins can view all payments"
     )
   );
 
+-- Users can view their own payments
+CREATE POLICY "Users can view own payments"
+  ON public.payments
+  FOR SELECT
+  USING (user_id = auth.uid());
+
 -- Admins can insert payments
 CREATE POLICY "Admins can insert payments"
   ON public.payments
