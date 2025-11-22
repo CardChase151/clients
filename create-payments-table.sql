@@ -1,7 +1,11 @@
+-- Drop existing table and policies if they exist
+DROP TABLE IF EXISTS public.payments CASCADE;
+
 -- Create payments table
 CREATE TABLE IF NOT EXISTS public.payments (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+  project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
   amount NUMERIC(10, 2) NOT NULL,
   paid BOOLEAN DEFAULT FALSE,
@@ -65,5 +69,6 @@ CREATE TRIGGER on_payment_updated
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS payments_user_id_idx ON public.payments(user_id);
+CREATE INDEX IF NOT EXISTS payments_project_id_idx ON public.payments(project_id);
 CREATE INDEX IF NOT EXISTS payments_created_at_idx ON public.payments(created_at);
 CREATE INDEX IF NOT EXISTS payments_paid_idx ON public.payments(paid);

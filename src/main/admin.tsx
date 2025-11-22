@@ -61,6 +61,9 @@ function Admin() {
   const [newPaymentName, setNewPaymentName] = useState('');
   const [newPaymentAmount, setNewPaymentAmount] = useState('');
   const [loadingPayments, setLoadingPayments] = useState(false);
+  const [userProjects, setUserProjects] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedProjectForPayments, setSelectedProjectForPayments] = useState<string | null>(null);
+  const [loadingProjects, setLoadingProjects] = useState(false);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -564,13 +567,38 @@ function Admin() {
     }
   };
 
-  const fetchPayments = async (userId: string) => {
+  const fetchUserProjects = async (userId: string) => {
+    setLoadingProjects(true);
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        setUserProjects(data);
+        // Auto-select first project if available
+        if (data.length > 0) {
+          setSelectedProjectForPayments(data[0].id);
+          fetchPayments(userId, data[0].id);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching projects:', err);
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
+
+  const fetchPayments = async (userId: string, projectId: string) => {
     setLoadingPayments(true);
     try {
       const { data, error } = await supabase
         .from('payments')
         .select('*')
         .eq('user_id', userId)
+        .eq('project_id', projectId)
         .order('created_at', { ascending: false });
 
       if (!error && data) {
@@ -583,19 +611,20 @@ function Admin() {
     }
   };
 
-  const addPayment = async (userId: string, name: string, amount: number) => {
+  const addPayment = async (userId: string, projectId: string, name: string, amount: number) => {
     try {
       const { error } = await supabase
         .from('payments')
         .insert({
           user_id: userId,
+          project_id: projectId,
           name: name,
           amount: amount,
           paid: false
         });
 
       if (!error) {
-        fetchPayments(userId);
+        fetchPayments(userId, projectId);
       }
     } catch (err) {
       console.error('Error adding payment:', err);
@@ -603,7 +632,7 @@ function Admin() {
     }
   };
 
-  const togglePaymentPaid = async (paymentId: string, currentPaidStatus: boolean, userId: string) => {
+  const togglePaymentPaid = async (paymentId: string, currentPaidStatus: boolean, userId: string, projectId: string) => {
     try {
       const { error } = await supabase
         .from('payments')
@@ -611,7 +640,7 @@ function Admin() {
         .eq('id', paymentId);
 
       if (!error) {
-        fetchPayments(userId);
+        fetchPayments(userId, projectId);
       }
     } catch (err) {
       console.error('Error updating payment:', err);
@@ -619,7 +648,7 @@ function Admin() {
     }
   };
 
-  const deletePayment = async (paymentId: string, userId: string) => {
+  const deletePayment = async (paymentId: string, userId: string, projectId: string) => {
     try {
       const { error } = await supabase
         .from('payments')
@@ -627,7 +656,7 @@ function Admin() {
         .eq('id', paymentId);
 
       if (!error) {
-        fetchPayments(userId);
+        fetchPayments(userId, projectId);
       }
     } catch (err) {
       console.error('Error deleting payment:', err);
@@ -1342,7 +1371,7 @@ function Admin() {
                                   userId: u.id,
                                   userName: u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.email
                                 });
-                                fetchPayments(u.id);
+                                fetchUserProjects(u.id);
                               }}
                               title="Payment Breakdown"
                               style={{
@@ -2382,6 +2411,8 @@ function Admin() {
           onClick={() => {
             setPaymentModal(null);
             setPayments([]);
+            setUserProjects([]);
+            setSelectedProjectForPayments(null);
             setNewPaymentName('');
             setNewPaymentAmount('');
           }}
@@ -2423,13 +2454,70 @@ function Admin() {
             <p style={{
               fontSize: '14px',
               color: '#666666',
-              marginBottom: '24px'
+              marginBottom: '20px'
             }}>
               {paymentModal.userName}
             </p>
 
+            {/* Project Selector */}
+            {loadingProjects ? (
+              <div style={{ textAlign: 'center', color: '#666666', padding: '20px' }}>
+                Loading projects...
+              </div>
+            ) : userProjects.length > 0 ? (
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  color: '#999999',
+                  marginBottom: '8px'
+                }}>
+                  Select App / Project
+                </label>
+                <select
+                  value={selectedProjectForPayments || ''}
+                  onChange={(e) => {
+                    setSelectedProjectForPayments(e.target.value);
+                    if (paymentModal) {
+                      fetchPayments(paymentModal.userId, e.target.value);
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#0A0A0A',
+                    border: '1px solid #333333',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    fontSize: '14px',
+                    color: '#FFFFFF',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {userProjects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div style={{
+                textAlign: 'center',
+                color: '#666666',
+                padding: '40px',
+                backgroundColor: '#0A0A0A',
+                border: '1px solid #333333',
+                borderRadius: '8px',
+                marginBottom: '24px'
+              }}>
+                No projects found for this user
+              </div>
+            )}
+
             {/* Existing Payments List */}
-            {loadingPayments ? (
+            {!selectedProjectForPayments ? null : loadingPayments ? (
               <div style={{ textAlign: 'center', color: '#666666', padding: '40px' }}>
                 Loading payments...
               </div>
@@ -2472,8 +2560,8 @@ function Admin() {
                         type="checkbox"
                         checked={payment.paid}
                         onChange={() => {
-                          if (paymentModal) {
-                            togglePaymentPaid(payment.id, payment.paid, paymentModal.userId);
+                          if (paymentModal && selectedProjectForPayments) {
+                            togglePaymentPaid(payment.id, payment.paid, paymentModal.userId, selectedProjectForPayments);
                           }
                         }}
                         style={{
@@ -2486,8 +2574,8 @@ function Admin() {
                       />
                       <button
                         onClick={() => {
-                          if (paymentModal && window.confirm('Delete this payment?')) {
-                            deletePayment(payment.id, paymentModal.userId);
+                          if (paymentModal && selectedProjectForPayments && window.confirm('Delete this payment?')) {
+                            deletePayment(payment.id, paymentModal.userId, selectedProjectForPayments);
                           }
                         }}
                         style={{
@@ -2628,13 +2716,13 @@ function Admin() {
                 </div>
                 <button
                   onClick={async () => {
-                    if (newPaymentName && newPaymentAmount && paymentModal) {
-                      await addPayment(paymentModal.userId, newPaymentName, parseFloat(newPaymentAmount));
+                    if (newPaymentName && newPaymentAmount && paymentModal && selectedProjectForPayments) {
+                      await addPayment(paymentModal.userId, selectedProjectForPayments, newPaymentName, parseFloat(newPaymentAmount));
                       setNewPaymentName('');
                       setNewPaymentAmount('');
                     }
                   }}
-                  disabled={!newPaymentName || !newPaymentAmount}
+                  disabled={!newPaymentName || !newPaymentAmount || !selectedProjectForPayments}
                   style={{
                     backgroundColor: '#FFFFFF',
                     color: '#000000',
@@ -2658,6 +2746,8 @@ function Admin() {
               onClick={() => {
                 setPaymentModal(null);
                 setPayments([]);
+                setUserProjects([]);
+                setSelectedProjectForPayments(null);
                 setNewPaymentName('');
                 setNewPaymentAmount('');
               }}
