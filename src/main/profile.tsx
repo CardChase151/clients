@@ -82,7 +82,7 @@ function Profile() {
       const { data, error } = await supabase
         .from('projects')
         .select('id, name, created_at')
-        .eq('user_id', user.id)
+        .eq('created_by', user.id)
         .order('created_at', { ascending: true });
 
       if (!error && data && data.length > 0) {

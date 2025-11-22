@@ -573,7 +573,7 @@ function Admin() {
       const { data, error } = await supabase
         .from('projects')
         .select('id, name')
-        .eq('user_id', userId)
+        .eq('created_by', userId)
         .order('created_at', { ascending: false });
 
       if (!error && data) {
