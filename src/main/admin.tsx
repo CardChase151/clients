@@ -30,7 +30,7 @@ function Admin() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeSection, setActiveSection] = useState<'upload' | 'users' | 'emails' | 'history'>('upload');
+  const [activeSection, setActiveSection] = useState<'upload' | 'users' | 'emails' | 'history'>('users');
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
@@ -56,6 +56,11 @@ function Admin() {
   const [sendingNow, setSendingNow] = useState(false);
   const [approvalModal, setApprovalModal] = useState<{ userId: string; userEmail: string; userName: string } | null>(null);
   const [sendingApprovalEmail, setSendingApprovalEmail] = useState(false);
+  const [paymentModal, setPaymentModal] = useState<{ userId: string; userName: string } | null>(null);
+  const [payments, setPayments] = useState<Array<{ id: string; name: string; amount: number; paid: boolean }>>([]);
+  const [newPaymentName, setNewPaymentName] = useState('');
+  const [newPaymentAmount, setNewPaymentAmount] = useState('');
+  const [loadingPayments, setLoadingPayments] = useState(false);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -559,6 +564,77 @@ function Admin() {
     }
   };
 
+  const fetchPayments = async (userId: string) => {
+    setLoadingPayments(true);
+    try {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        setPayments(data);
+      }
+    } catch (err) {
+      console.error('Error fetching payments:', err);
+    } finally {
+      setLoadingPayments(false);
+    }
+  };
+
+  const addPayment = async (userId: string, name: string, amount: number) => {
+    try {
+      const { error } = await supabase
+        .from('payments')
+        .insert({
+          user_id: userId,
+          name: name,
+          amount: amount,
+          paid: false
+        });
+
+      if (!error) {
+        fetchPayments(userId);
+      }
+    } catch (err) {
+      console.error('Error adding payment:', err);
+      alert('Failed to add payment');
+    }
+  };
+
+  const togglePaymentPaid = async (paymentId: string, currentPaidStatus: boolean, userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('payments')
+        .update({ paid: !currentPaidStatus })
+        .eq('id', paymentId);
+
+      if (!error) {
+        fetchPayments(userId);
+      }
+    } catch (err) {
+      console.error('Error updating payment:', err);
+      alert('Failed to update payment');
+    }
+  };
+
+  const deletePayment = async (paymentId: string, userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('payments')
+        .delete()
+        .eq('id', paymentId);
+
+      if (!error) {
+        fetchPayments(userId);
+      }
+    } catch (err) {
+      console.error('Error deleting payment:', err);
+      alert('Failed to delete payment');
+    }
+  };
+
   if (!isAdmin) {
     return null;
   }
@@ -647,14 +723,6 @@ function Admin() {
           }}
         >
           <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {activeSection === 'upload' && (
-              <>
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 4v10m-5-5l5-5 5 5M3 13v2h12v-2"/>
-                </svg>
-                Upload Project
-              </>
-            )}
             {activeSection === 'users' && (
               <>
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -663,6 +731,14 @@ function Admin() {
                   <path d="M13 7l2 2 4-4"/>
                 </svg>
                 User Management
+              </>
+            )}
+            {activeSection === 'upload' && (
+              <>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 4v10m-5-5l5-5 5 5M3 13v2h12v-2"/>
+                </svg>
+                Upload Project
               </>
             )}
             {activeSection === 'emails' && (
@@ -712,33 +788,6 @@ function Admin() {
           }}>
             <button
               onClick={() => {
-                setActiveSection('upload');
-                setShowMobileMenu(false);
-              }}
-              style={{
-                width: '100%',
-                backgroundColor: activeSection === 'upload' ? '#0A0A0A' : 'transparent',
-                color: activeSection === 'upload' ? '#FFFFFF' : '#999999',
-                border: 'none',
-                borderBottom: '1px solid #333333',
-                padding: '14px 16px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                textAlign: 'left',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 4v10m-5-5l5-5 5 5M3 13v2h12v-2"/>
-              </svg>
-              Upload Project
-            </button>
-
-            <button
-              onClick={() => {
                 setActiveSection('users');
                 setShowMobileMenu(false);
               }}
@@ -764,6 +813,33 @@ function Admin() {
                 <path d="M13 7l2 2 4-4"/>
               </svg>
               User Management
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveSection('upload');
+                setShowMobileMenu(false);
+              }}
+              style={{
+                width: '100%',
+                backgroundColor: activeSection === 'upload' ? '#0A0A0A' : 'transparent',
+                color: activeSection === 'upload' ? '#FFFFFF' : '#999999',
+                border: 'none',
+                borderBottom: '1px solid #333333',
+                padding: '14px 16px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                textAlign: 'left',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 4v10m-5-5l5-5 5 5M3 13v2h12v-2"/>
+              </svg>
+              Upload Project
             </button>
 
             <button
@@ -832,42 +908,6 @@ function Admin() {
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button
-              onClick={() => setActiveSection('upload')}
-              style={{
-                backgroundColor: activeSection === 'upload' ? '#1A1A1A' : 'transparent',
-                color: activeSection === 'upload' ? '#FFFFFF' : '#999999',
-                border: activeSection === 'upload' ? '1px solid #333333' : '1px solid transparent',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}
-              onMouseEnter={(e) => {
-                if (activeSection !== 'upload') {
-                  e.currentTarget.style.backgroundColor = '#0A0A0A';
-                  e.currentTarget.style.color = '#FFFFFF';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeSection !== 'upload') {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = '#999999';
-                }
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 4v10m-5-5l5-5 5 5M3 13v2h12v-2"/>
-              </svg>
-              Upload Project
-            </button>
-
-            <button
               onClick={() => setActiveSection('users')}
               style={{
                 backgroundColor: activeSection === 'users' ? '#1A1A1A' : 'transparent',
@@ -903,6 +943,42 @@ function Admin() {
                 <path d="M13 7l2 2 4-4"/>
               </svg>
               User Management
+            </button>
+
+            <button
+              onClick={() => setActiveSection('upload')}
+              style={{
+                backgroundColor: activeSection === 'upload' ? '#1A1A1A' : 'transparent',
+                color: activeSection === 'upload' ? '#FFFFFF' : '#999999',
+                border: activeSection === 'upload' ? '1px solid #333333' : '1px solid transparent',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
+              onMouseEnter={(e) => {
+                if (activeSection !== 'upload') {
+                  e.currentTarget.style.backgroundColor = '#0A0A0A';
+                  e.currentTarget.style.color = '#FFFFFF';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeSection !== 'upload') {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#999999';
+                }
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 4v10m-5-5l5-5 5 5M3 13v2h12v-2"/>
+              </svg>
+              Upload Project
             </button>
 
             <button
@@ -1256,6 +1332,35 @@ function Admin() {
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={u.invoice_payment_type ? '#FFFFFF' : '#666666'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <rect x="2" y="5" width="20" height="14" rx="2"/>
                                 <line x1="2" y1="10" x2="22" y2="10"/>
+                              </svg>
+                            </button>
+
+                            {/* Payment Breakdown Icon */}
+                            <button
+                              onClick={() => {
+                                setPaymentModal({
+                                  userId: u.id,
+                                  userName: u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.email
+                                });
+                                fetchPayments(u.id);
+                              }}
+                              title="Payment Breakdown"
+                              style={{
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                padding: '6px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'transform 0.2s'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                            >
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="12" y1="1" x2="12" y2="23"/>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                               </svg>
                             </button>
                           </div>
@@ -2267,6 +2372,309 @@ function Admin() {
                 {sendingNow ? 'Sending...' : 'Send Now'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Breakdown Modal */}
+      {paymentModal && (
+        <div
+          onClick={() => {
+            setPaymentModal(null);
+            setPayments([]);
+            setNewPaymentName('');
+            setNewPaymentAmount('');
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#1A1A1A',
+              border: '1px solid #333333',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '500px',
+              width: '100%',
+              maxHeight: '80vh',
+              overflow: 'auto'
+            }}
+          >
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#FFFFFF',
+              margin: '0 0 8px 0'
+            }}>
+              Payment Breakdown
+            </h3>
+            <p style={{
+              fontSize: '14px',
+              color: '#666666',
+              marginBottom: '24px'
+            }}>
+              {paymentModal.userName}
+            </p>
+
+            {/* Existing Payments List */}
+            {loadingPayments ? (
+              <div style={{ textAlign: 'center', color: '#666666', padding: '40px' }}>
+                Loading payments...
+              </div>
+            ) : payments.length > 0 ? (
+              <div style={{ marginBottom: '24px' }}>
+                {payments.map((payment) => (
+                  <div
+                    key={payment.id}
+                    style={{
+                      backgroundColor: payment.paid ? '#22C55E15' : '#0A0A0A',
+                      border: payment.paid ? '1px solid #22C55E30' : '1px solid #333333',
+                      borderRadius: '8px',
+                      padding: '16px',
+                      marginBottom: '12px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#FFFFFF',
+                        marginBottom: '4px'
+                      }}>
+                        {payment.name}
+                      </div>
+                      <div style={{
+                        fontSize: '14px',
+                        color: '#FFFFFF',
+                        fontWeight: '500'
+                      }}>
+                        ${payment.amount.toFixed(2)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <input
+                        type="checkbox"
+                        checked={payment.paid}
+                        onChange={() => {
+                          if (paymentModal) {
+                            togglePaymentPaid(payment.id, payment.paid, paymentModal.userId);
+                          }
+                        }}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          cursor: 'pointer',
+                          accentColor: '#22C55E'
+                        }}
+                        title={payment.paid ? 'Mark as unpaid' : 'Mark as paid'}
+                      />
+                      <button
+                        onClick={() => {
+                          if (paymentModal && window.confirm('Delete this payment?')) {
+                            deletePayment(payment.id, paymentModal.userId);
+                          }
+                        }}
+                        style={{
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          color: '#F87171',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          fontSize: '18px',
+                          lineHeight: '1'
+                        }}
+                        title="Delete payment"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Total */}
+                <div style={{
+                  borderTop: '1px solid #333333',
+                  paddingTop: '16px',
+                  marginTop: '8px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#FFFFFF' }}>
+                    Total
+                  </div>
+                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#FFFFFF' }}>
+                    ${payments.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}
+                  </div>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: '8px'
+                }}>
+                  <div style={{ fontSize: '14px', color: '#22C55E' }}>
+                    Paid
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#22C55E' }}>
+                    ${payments.filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0).toFixed(2)}
+                  </div>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: '4px'
+                }}>
+                  <div style={{ fontSize: '14px', color: '#F87171' }}>
+                    Outstanding
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#F87171' }}>
+                    ${payments.filter(p => !p.paid).reduce((sum, p) => sum + p.amount, 0).toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Add New Payment */}
+            <div style={{
+              backgroundColor: '#0A0A0A',
+              border: '1px solid #333333',
+              borderRadius: '8px',
+              padding: '16px',
+              marginBottom: '20px'
+            }}>
+              <h4 style={{
+                fontSize: '14px',
+                fontWeight: '600',
+                color: '#FFFFFF',
+                margin: '0 0 16px 0'
+              }}>
+                Add Payment
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    color: '#999999',
+                    marginBottom: '6px'
+                  }}>
+                    Name / Description
+                  </label>
+                  <input
+                    type="text"
+                    value={newPaymentName}
+                    onChange={(e) => setNewPaymentName(e.target.value)}
+                    placeholder="e.g., Discovery Fee, Invoice Payment"
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#000000',
+                      border: '1px solid #333333',
+                      borderRadius: '8px',
+                      padding: '10px 12px',
+                      fontSize: '14px',
+                      color: '#FFFFFF',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    color: '#999999',
+                    marginBottom: '6px'
+                  }}>
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    value={newPaymentAmount}
+                    onChange={(e) => setNewPaymentAmount(e.target.value)}
+                    placeholder="0.00"
+                    step="0.01"
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#000000',
+                      border: '1px solid #333333',
+                      borderRadius: '8px',
+                      padding: '10px 12px',
+                      fontSize: '14px',
+                      color: '#FFFFFF',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={async () => {
+                    if (newPaymentName && newPaymentAmount && paymentModal) {
+                      await addPayment(paymentModal.userId, newPaymentName, parseFloat(newPaymentAmount));
+                      setNewPaymentName('');
+                      setNewPaymentAmount('');
+                    }
+                  }}
+                  disabled={!newPaymentName || !newPaymentAmount}
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    color: '#000000',
+                    border: 'none',
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: (!newPaymentName || !newPaymentAmount) ? 'not-allowed' : 'pointer',
+                    opacity: (!newPaymentName || !newPaymentAmount) ? 0.5 : 1,
+                    transition: 'opacity 0.2s'
+                  }}
+                >
+                  Add Payment
+                </button>
+              </div>
+            </div>
+
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setPaymentModal(null);
+                setPayments([]);
+                setNewPaymentName('');
+                setNewPaymentAmount('');
+              }}
+              style={{
+                width: '100%',
+                backgroundColor: 'transparent',
+                color: '#666666',
+                border: '1px solid #333333',
+                padding: '12px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

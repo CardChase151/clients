@@ -405,6 +405,44 @@ function Profile() {
           )}
         </div>
 
+        {/* App Documentation */}
+        <div style={{
+          backgroundColor: '#1A1A1A',
+          border: '1px solid #333333',
+          borderRadius: '12px',
+          padding: '24px',
+          marginBottom: '20px'
+        }}>
+          <button
+            onClick={() => {
+              // TODO: Navigate to documentation
+              console.log('App Documentation clicked');
+            }}
+            style={{
+              backgroundColor: '#0A0A0A',
+              color: '#FFFFFF',
+              border: '1px solid #333333',
+              padding: '12px 20px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              width: '100%',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#1A1A1A';
+              e.currentTarget.style.borderColor = '#FFFFFF';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#0A0A0A';
+              e.currentTarget.style.borderColor = '#333333';
+            }}
+          >
+            App Documentation
+          </button>
+        </div>
+
         {/* Actions */}
         <div style={{
           backgroundColor: '#1A1A1A',
